@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>בנאי דף ההצעה שלי · אמא משקיעה</title>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{--canvas:#FBFAF7;--ink:#191A2E;--soft:#6B6B7B;--pink:#EF55A5;--pink-soft:#FCE1EF;
+        --lime:#CCD537;--vista:#8C9EFF;--sky:#BEE0F2;--line:#ECE7DF}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Heebo',sans-serif;background:var(--canvas);color:var(--ink);line-height:1.6}
+  .top{background:var(--ink);color:var(--canvas);padding:22px;text-align:center;position:sticky;top:0;z-index:20}
+  .top h1{font-size:1.3rem;font-weight:800}.top p{font-size:.9rem;opacity:.8;margin-top:4px}
+  .board{max-width:640px;margin:0 auto;padding:18px 16px 150px}
+  .note{background:var(--pink-soft);border-radius:14px;padding:14px 18px;font-size:.92rem;margin-bottom:16px}
+  .grp{background:#fff;border:1px solid var(--line);border-radius:20px;margin-bottom:14px;overflow:hidden}
+  .grp>summary{list-style:none;cursor:pointer;padding:18px 22px;font-weight:800;font-size:1.12rem;display:flex;align-items:center}
+  .grp>summary::-webkit-details-marker{display:none}
+  .grp>summary::after{content:"▾";color:var(--pink);margin-inline-start:auto}
+  .grp[open]>summary::after{content:"▴"}
+  .grp>summary .opt{font-size:.7rem;font-weight:700;color:var(--soft);background:var(--sky);padding:3px 10px;border-radius:100px;margin-inline-start:10px}
+  .grp .body{padding:0 22px 20px}
+  .fld{margin-bottom:14px}.fld label{display:block;font-weight:700;font-size:.96rem;margin-bottom:4px}
+  .fld .hint{font-size:.8rem;color:var(--soft);margin-bottom:7px}
+  .fld input,.fld textarea{width:100%;font-family:inherit;font-size:1rem;padding:12px 14px;border:1.5px solid var(--line);border-radius:12px;background:#fff;color:var(--ink)}
+  .fld input:focus,.fld textarea:focus{outline:none;border-color:var(--pink)}
+  .fld textarea{min-height:88px;resize:vertical;line-height:1.6}
+  .hgen{background:var(--pink-soft);border-radius:14px;padding:14px;margin-bottom:14px}
+  .hgen .hint2{font-size:.82rem;color:var(--ink);opacity:.75;margin-bottom:10px;font-weight:600}
+  .hgen .tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+  .hgen .tabs button{flex:1;min-width:92px;font-family:inherit;font-weight:700;font-size:.82rem;padding:9px 6px;border-radius:100px;border:1.5px solid transparent;background:#fff;cursor:pointer;color:var(--ink)}
+  .hgen .tabs button.on{background:var(--pink);border-color:var(--pink)}
+  .hgen .tv{margin-bottom:9px}
+  .hgen .tv label{display:block;font-size:.82rem;font-weight:700;margin-bottom:3px}
+  .hgen .tv input{width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:.95rem;background:#fff;color:var(--ink)}
+  .bar{position:fixed;bottom:0;left:0;right:0;background:rgba(251,250,247,.95);backdrop-filter:blur(8px);border-top:1px solid var(--line);padding:12px 16px;display:flex;gap:10px;justify-content:center;z-index:30}
+  .btn{font-family:inherit;font-weight:800;font-size:1rem;padding:14px 22px;border-radius:100px;border:none;cursor:pointer;text-decoration:none;text-align:center}
+  .btn.pink{background:var(--pink);color:var(--ink)}.btn.dark{background:var(--ink);color:#fff}
+  .ov{position:fixed;inset:0;background:rgba(25,26,46,.6);z-index:100;display:none;padding:14px}
+  .ov.on{display:flex;flex-direction:column}
+  .ov .head{display:flex;justify-content:space-between;align-items:center;color:#fff;padding:6px 4px 12px}
+  .ov iframe{flex:1;width:100%;border:none;border-radius:16px;background:#fff}
+  .ov .x{background:#fff;border:none;border-radius:100px;padding:10px 20px;font-weight:800;cursor:pointer;font-family:inherit}
+  .done{background:#fff;border-radius:20px;padding:28px;text-align:center;max-width:520px;margin:20px auto}
+  .done h2{font-size:1.5rem;margin-bottom:8px}
+  .done a{display:block;background:var(--sky);border-radius:14px;padding:16px;margin:12px 0;font-weight:800;text-decoration:none;color:var(--ink);word-break:break-all}
+  .done a.pink{background:var(--pink)}
+</style>
+</head>
+<body>
+<div class="top">
+  <h1>בנאי דף ההצעה שלך 💛</h1>
+  <p>ממלאות שאלון. צופות. מפרסמות. הדף באוויר.</p>
+</div>
+
+<div class="board" id="board">
+  <div class="note">כל השדות מלאים בדוגמה כדי שתראי איך זה נראה. <b>מוחקות ומחליפות בשלך</b>, בשפה של הלקוחה שלך. מה שריק פשוט לא יופיע.</div>
+</div>
+
+<div class="bar">
+  <button class="btn dark" onclick="preview()">👀 צפי בדף</button>
+  <button class="btn pink" onclick="publish()">🚀 פרסמי את הדף</button>
+</div>
+
+<div class="ov" id="ov">
+  <div class="head"><span style="font-weight:800">כך נראה הדף שלך</span>
+    <button class="x" onclick="closeOv()">סגירה ✕</button></div>
+  <iframe id="pv"></iframe>
+</div>
+
+<script src="/lib/page.js"></script>
+<script>
+/* ── מחולל הכותרת: 3 תבניות מנצחות ── */
+const TEMPLATES = {
+ "1":{ label:"תוצאה + זמן", vars:[
+    {k:"h_result", label:"התוצאה שהיא הכי רוצה", v:"ארוחות מוכנות לכל השבוע"},
+    {k:"h_time",   label:"תוך כמה זמן", v:"שעה אחת"},
+    {k:"h_obj",    label:"החשש/ההתנגדות הכי גדולה", v:"אין לך רגע פנוי"},
+  ], build:v=>`${v.h_result} תוך ${v.h_time}.\nגם אם ${v.h_obj}.` },
+ "2":{ label:"כאב + פתרון", vars:[
+    {k:"h_pain",   label:"הבעיה הכואבת", v:"הלחץ של מה עושים לארוחת ערב"},
+    {k:"h_result", label:"התוצאה", v:"שולחן מלא ואוכל ביתי"},
+    {k:"h_hate",   label:"מה שהיא שונאת לעשות", v:"לבשל כל יום מחדש"},
+  ], build:v=>`נמאס לך מ${v.h_pain}?\nככה תגיעי ל${v.h_result}\nבלי ${v.h_hate}.` },
+ "3":{ label:"ממצב לחלום", vars:[
+    {k:"h_from",   label:"המצב המתסכל היום", v:"בלגן כל ערב"},
+    {k:"h_to",     label:"התוצאה החלומית", v:"רוגע ושקט בבית"},
+    {k:"h_time",   label:"תוך כמה זמן", v:"יום אחד"},
+    {k:"h_method", label:"שם השיטה שלך", v:"שיטת המקרר המלא"},
+  ], build:v=>`מ${v.h_from}\nל${v.h_to} תוך ${v.h_time}\nבעזרת ${v.h_method}.` },
+};
+const HGEN = '<div class="hgen">'+
+  '<div class="hint2">בחרי תבנית מנצחת ומלאי את החוסר. הכותרת נכתבת לבד 👇</div>'+
+  '<div class="tabs">'+
+    Object.keys(TEMPLATES).map(k=>'<button type="button" data-tpl="'+k+'">'+TEMPLATES[k].label+'</button>').join("")+
+  '</div><div id="tplfields"></div></div>';
+
+const FIELDS = [
+ {sec:"פרטי העסק שלך", f:[
+   {k:"bizName", t:"input", label:"שם העסק שלך", hint:"מה שיופיע למעלה בדף", v:"המטבח של דנה"},
+   {k:"email",   t:"input", label:"המייל שלך (לגוגל)", hint:"לכאן תגיע טבלת הלידים שלך, אוטומטית", v:""},
+ ]},
+ {sec:"1. הכותרת (הכי חשוב)", f:[
+   {k:"eyebrow",  t:"input", label:"למי הדף מדבר", hint:"שורה קטנה. למשל: לאמהות עמוסות", v:"לאמהות שרוצות ערב שקט"},
+   {t:"headlineGen"},
+   {k:"headline", t:"area",  label:"הכותרת שנבנתה (אפשר לכוונן ידנית)", hint:"בחרי תבנית למעלה ומלאי, או כתבי חופשי כאן", v:"ארוחות מוכנות לשבוע.\nבלי לחשוב על זה בכלל."},
+   {k:"sub",      t:"area",  label:"משפט שמוריד חשש", hint:"מתחיל ב״בלי...״ או ״גם אם...״", v:"מגיע עד הבית.\nגם אם אין לך רגע פנוי."},
+   {k:"cta",      t:"input", label:"מה כתוב על הכפתור", hint:"", v:"אני רוצה פרטים"},
+ ]},
+ {sec:"2. הרגע הכואב", opt:true, f:[
+   {k:"snapTitle", t:"input", label:"כותרת", hint:"", v:"מכירה את הרגע הזה?"},
+   {k:"snapLines", t:"area",  label:"תיאור הרגע", hint:"שורה בכל שורה. 3 עד 5 מילים. שתגיד ״זה אני״", v:"שש בערב.\nהילדים רעבים.\nהמקרר ריק.\nושוב פסטה ברוטב."},
+ ]},
+ {sec:"3. מי את", opt:true, f:[
+   {k:"aboutTitle", t:"input", label:"כותרת", hint:"", v:"נעים להכיר."},
+   {k:"aboutText",  t:"area",  label:"3 שורות עלייך", hint:"מי את ולמה כדאי להקשיב לך", v:"אני דנה.\nשפית ואמא לשלושה.\nחמש שנים מבשלת למשפחות."},
+   {k:"aboutPoints",t:"area",  label:"3 נקודות/מספרים", hint:"שורה לכל אחת", v:"מעל 120 משפחות\nתפריט חדש כל שבוע\nרק חומרים טריים"},
+ ]},
+ {sec:"4. השיטה שלך", opt:true, f:[
+   {k:"mechTitle", t:"input", label:"שם לשיטה שלך", hint:"תני שם. למשל: שיטת המקרר המלא", v:"שיטת המקרר המלא."},
+   {k:"mechText",  t:"area",  label:"איך זה עובד", hint:"שורות קצרות, שלב אחרי שלב", v:"בוחרות תפריט.\nאני מבשלת ביום אחד.\nמגיע קר ומסודר.\nרק לחמם ולהגיש."},
+ ]},
+ {sec:"5. מה מקבלים", opt:true, f:[
+   {k:"benTitle", t:"input", label:"כותרת", hint:"", v:"מה יש בפנים"},
+   {k:"benItems", t:"area",  label:"רשימת מה שמקבלים", hint:"שורה לכל דבר. תתחילי בפועל", v:"חמש ארוחות ערב לשבוע\nמנות בגודל המשפחה שלך\nרשימת קניות מוכנה\nמשלוח עד הבית"},
+ ]},
+ {sec:"6. ההצעה והמחיר", opt:true, f:[
+   {k:"priceLabel", t:"input", label:"תווית המחיר", hint:"למשל: מחיר לשבוע", v:"מחיר לשבוע"},
+   {k:"price",      t:"input", label:"המחיר", hint:"למשל: ₪390", v:"₪390"},
+   {k:"includes",   t:"area",  label:"מה כלול", hint:"שורה לכל פריט", v:"5 ארוחות מלאות\nמשלוח חינם\nהחלפת מנה בלי תוספת"},
+   {k:"offerNote",  t:"input", label:"משפט ביטחון", hint:"", v:"לא מתאים? מחזירים לך את הכסף."},
+ ]},
+ {sec:"7. למי כן ולמי לא", opt:true, f:[
+   {k:"goodTitle", t:"input", label:"כותרת ״כן״", hint:"", v:"זה בשבילך אם"},
+   {k:"good",      t:"area",  label:"למי זה מתאים", hint:"שורה לכל דבר", v:"יש לך משפחה עמוסה\nבא לך אוכל ביתי אמיתי\nנמאס לך לחשוב מה לבשל"},
+   {k:"badTitle",  t:"input", label:"כותרת ״לא״", hint:"", v:"זה לא בשבילך אם"},
+   {k:"bad",       t:"area",  label:"למי זה לא מתאים", hint:"שורה לכל דבר. בונה אמון", v:"את אוהבת לבשל בעצמך\nאת מחפשת את הזול ביותר"},
+ ]},
+ {sec:"8. המלצה", opt:true, f:[
+   {k:"t1q", t:"input", label:"ציטוט של לקוחה מרוצה", hint:"אם אין עדיין, השאירי ריק", v:"פעם ראשונה שהערב שלי שקט. שווה כל שקל."},
+   {k:"t1n", t:"input", label:"שם הממליצה", hint:"", v:"מיכל, אמא לשניים"},
+ ]},
+ {sec:"9. שאלה שחוזרת", opt:true, f:[
+   {k:"faqQ", t:"input", label:"שאלה שלקוחות שואלות", hint:"", v:"כמה זמן מראש להזמין?"},
+   {k:"faqA", t:"input", label:"התשובה שלך", hint:"", v:"עד יום חמישי בערב, והכל מגיע ראשון."},
+ ]},
+ {sec:"10. אזור השארת הפרטים", opt:true, f:[
+   {k:"leadTitle", t:"input", label:"כותרת מעל הטופס", hint:"", v:"רוצה לשמוע עוד?"},
+   {k:"leadSub",   t:"input", label:"משפט מתחת", hint:"", v:"השאירי פרטים ואחזור אליך היום."},
+   {k:"thanks",    t:"input", label:"מה יופיע אחרי שמילאו", hint:"", v:"קיבלתי! אחזור אליך היום 💛"},
+ ]},
+ {sec:"11. מילה מהלב", opt:true, f:[
+   {k:"finalTitle", t:"input", label:"כותרת", hint:"", v:"מילה אחרונה ממני"},
+   {k:"finalText",  t:"area",  label:"כמה שורות אישיות", hint:"למה את עושה את זה", v:"אני יודעת איך זה מרגיש.\nלרצות לתת לילדים אוכל טוב.\nובלי כוח לזה.\nתני לי לקחת את זה ממך."},
+   {k:"sig",        t:"input", label:"חתימה", hint:"", v:"באהבה, דנה 💛"},
+ ]},
+];
+
+const board = document.getElementById("board");
+FIELDS.forEach((grp,gi)=>{
+  const d=document.createElement("details"); d.className="grp"; if(gi<2) d.open=true;
+  const opt = grp.opt ? '<span class="opt">אפשר לדלג</span>' : '';
+  d.innerHTML = '<summary>'+grp.sec+opt+'</summary><div class="body">'+
+    grp.f.map(f=>{
+      if(f.t==="headlineGen") return HGEN;
+      const el = f.t==="area"
+        ? '<textarea data-k="'+f.k+'">'+f.v+'</textarea>'
+        : '<input data-k="'+f.k+'" value="'+f.v.replace(/"/g,'&quot;')+'">';
+      return '<div class="fld"><label>'+f.label+'</label>'+(f.hint?'<div class="hint">'+f.hint+'</div>':'')+el+'</div>';
+    }).join("")+'</div>';
+  board.appendChild(d);
+});
+
+const KEY="offerBuilderV2";
+function readAll(){const o={};document.querySelectorAll("[data-k]").forEach(e=>o[e.dataset.k]=e.value);return o;}
+function saveLocal(){try{localStorage.setItem(KEY,JSON.stringify(readAll()))}catch(e){}}
+function loadLocal(){try{const s=JSON.parse(localStorage.getItem(KEY)||"{}");
+  document.querySelectorAll("[data-k]").forEach(e=>{if(s[e.dataset.k]!==undefined)e.value=s[e.dataset.k]})}catch(e){}}
+/* ── לוגיקת מחולל הכותרת ── */
+const HK="offerHeadlineV1";
+let activeTpl = "1";
+function saveHK(){ const o={_tpl:activeTpl};
+  document.querySelectorAll("[data-hk]").forEach(e=>o[e.dataset.hk]=e.value);
+  try{localStorage.setItem(HK,JSON.stringify(o))}catch(e){} }
+function computeHeadline(){
+  const t=TEMPLATES[activeTpl], vals={};
+  document.querySelectorAll("[data-hk]").forEach(e=>vals[e.dataset.hk]= (e.value.trim()||"…"));
+  const hf=document.querySelector('[data-k="headline"]'); if(hf) hf.value=t.build(vals);
+  saveHK(); saveLocal();
+}
+function renderTpl(){
+  const t=TEMPLATES[activeTpl], box=document.getElementById("tplfields");
+  if(!box) return;
+  let saved={}; try{saved=JSON.parse(localStorage.getItem(HK)||"{}")}catch(e){}
+  box.innerHTML = t.vars.map(v=>{
+    const val = saved[v.k]!==undefined ? saved[v.k] : v.v;
+    return '<div class="tv"><label>'+v.label+'</label><input data-hk="'+v.k+'" value="'+String(val).replace(/"/g,'&quot;')+'"></div>';
+  }).join("");
+  document.querySelectorAll(".hgen .tabs button").forEach(b=>b.classList.toggle("on", b.dataset.tpl===activeTpl));
+  computeHeadline();
+}
+
+loadLocal();
+try{ const s=JSON.parse(localStorage.getItem(HK)||"{}"); if(s._tpl) activeTpl=s._tpl; }catch(e){}
+renderTpl();
+
+document.addEventListener("input",e=>{
+  if(e.target.dataset.hk) computeHeadline();
+  else if(e.target.dataset.k) saveLocal();
+});
+document.addEventListener("click",e=>{
+  if(e.target.dataset.tpl){ activeTpl=e.target.dataset.tpl; saveHK(); renderTpl(); }
+});
+
+function preview(){
+  document.getElementById("pv").srcdoc = PageEngine.buildPageHTML(readAll(), {});
+  document.getElementById("ov").classList.add("on");
+}
+function closeOv(){document.getElementById("ov").classList.remove("on");}
+
+async function publish(){
+  const d = readAll();
+  if(!d.bizName){ alert("רק צריך שם עסק 🙂"); return; }
+  if(!d.email || d.email.indexOf("@")<0){ alert("צריך את המייל שלך כדי לפתוח לך את טבלת הלידים 🙂"); return; }
+  const btn = event.target; btn.textContent="מפרסמת..."; btn.disabled=true;
+  try{
+    const r = await fetch("/api/publish",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(d)});
+    const j = await r.json();
+    if(!j.ok) throw new Error(j.error||"שגיאה");
+    document.body.innerHTML =
+      '<div class="done"><h2>הדף שלך באוויר! 🎉</h2>'+
+      '<p style="color:#6B6B7B">שני הקישורים שלך:</p>'+
+      '<a class="pink" href="'+j.pageUrl+'" target="_blank">🌐 דף הנחיתה שלך (לשתף בסטורי)</a>'+
+      '<a href="'+j.sheetUrl+'" target="_blank">📊 טבלת הלידים שלך בגוגל</a>'+
+      (j.live? '<p style="color:#6B6B7B;font-size:.85rem;margin-top:10px">הטבלה נשלחה גם למייל שלך.</p>'
+             : '<p style="color:#EF55A5;font-size:.85rem;margin-top:10px">מצב בדיקה — עדיין לא מחובר לגוגל.</p>')+
+      '</div>';
+  }catch(e){
+    alert("משהו השתבש: "+e.message); btn.textContent="🚀 פרסמי את הדף"; btn.disabled=false;
+  }
+}
+</script>
+</body>
+</html>

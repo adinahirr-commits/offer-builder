@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>מרכז הפגישה · סגירת דף ההצעה</title>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{--canvas:#FBFAF7;--ink:#191A2E;--soft:#6B6B7B;--pink:#EF55A5;--pink-soft:#FCE1EF;
+        --lime:#CCD537;--vista:#8C9EFF;--sky:#BEE0F2;--line:#ECE7DF}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Heebo',sans-serif;background:var(--canvas);color:var(--ink);line-height:1.6}
+  .top{background:var(--ink);color:var(--canvas);padding:16px 20px;position:sticky;top:0;z-index:20;
+       display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .top h1{font-size:1.15rem;font-weight:800;margin-inline-end:auto}
+  .top input{font-family:inherit;font-size:.95rem;padding:8px 14px;border-radius:100px;border:none;background:#fff;color:var(--ink);width:170px}
+  .timer{font-weight:800;font-size:1.05rem;background:var(--pink);color:var(--ink);padding:8px 16px;border-radius:100px;cursor:pointer;border:none;font-family:inherit}
+  .wrap{max-width:680px;margin:0 auto;padding:18px 16px 80px}
+  .stage{background:#fff;border:1px solid var(--line);border-radius:18px;padding:0;margin-bottom:12px;overflow:hidden;transition:border-color .2s}
+  .stage.now{border-color:var(--pink);box-shadow:0 0 0 3px var(--pink-soft)}
+  .stage>summary{list-style:none;cursor:pointer;padding:16px 20px;display:flex;align-items:center;gap:12px}
+  .stage>summary::-webkit-details-marker{display:none}
+  .stage .time{font-weight:900;font-size:.85rem;color:#fff;background:var(--ink);border-radius:100px;padding:4px 12px;white-space:nowrap}
+  .stage.now .time{background:var(--pink)}
+  .stage .ttl{font-weight:800;font-size:1.08rem}
+  .stage>summary::after{content:"▾";color:var(--soft);margin-inline-start:auto}
+  .stage[open]>summary::after{content:"▴"}
+  .stage .body{padding:0 20px 20px;font-size:1rem}
+  .stage .body ul{margin:6px 20px}
+  .stage .body li{margin-bottom:6px}
+  .say{background:var(--sky);border-radius:12px;padding:12px 16px;font-weight:700;margin:10px 0}
+  .say small{display:block;font-weight:600;color:var(--soft);font-size:.78rem;margin-bottom:2px}
+  label.fl{display:block;font-weight:700;font-size:.9rem;margin:12px 0 4px}
+  input.f,textarea.f{width:100%;font-family:inherit;font-size:1rem;padding:11px 14px;border:1.5px solid var(--line);border-radius:11px;background:#fff;color:var(--ink)}
+  textarea.f{min-height:80px;resize:vertical;line-height:1.6}
+  /* headline gen */
+  .hgen{background:var(--pink-soft);border-radius:12px;padding:14px}
+  .hgen .tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+  .hgen .tabs button{flex:1;min-width:92px;font-family:inherit;font-weight:700;font-size:.82rem;padding:9px 6px;border-radius:100px;border:1.5px solid transparent;background:#fff;cursor:pointer;color:var(--ink)}
+  .hgen .tabs button.on{background:var(--pink);border-color:var(--pink)}
+  .hgen .tv{margin-bottom:9px}.hgen .tv label{display:block;font-size:.82rem;font-weight:700;margin-bottom:3px}
+  .hgen .tv input{width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:.95rem;background:#fff}
+  .hout{background:var(--ink);color:var(--canvas);border-radius:12px;padding:14px 16px;margin-top:10px;white-space:pre-line;font-weight:800;font-size:1.15rem;line-height:1.4}
+  .btn{font-family:inherit;font-weight:800;font-size:.95rem;padding:11px 18px;border-radius:100px;border:none;cursor:pointer;background:var(--ink);color:#fff;margin-top:10px}
+  /* checklist */
+  .check{background:var(--lime);border-radius:18px;padding:20px 22px;margin-top:8px}
+  .check h3{font-size:1.15rem;margin-bottom:12px}
+  .check label{display:flex;align-items:center;gap:12px;padding:9px 0;font-weight:700;font-size:1.05rem;cursor:pointer;border-bottom:1px solid rgba(25,26,46,.12)}
+  .check input{width:22px;height:22px;accent-color:var(--ink)}
+  .done-all{text-align:center;font-weight:800;margin-top:12px;font-size:1.1rem;display:none}
+</style>
+</head>
+<body>
+<div class="top">
+  <h1>מרכז הפגישה 💛</h1>
+  <input id="who" placeholder="שם המשתתפת">
+  <button class="timer" id="timer" onclick="toggleTimer()">▶︎ 00:00</button>
+</div>
+
+<div class="wrap">
+  <div style="background:var(--pink-soft);border-radius:12px;padding:12px 16px;font-size:.9rem;margin-bottom:14px">
+    <b>העיקרון:</b> לא שיעור ולא ליטוש. סגירה. היא נכנסת עם טיוטה, יוצאת עם מוצר שנשלח היום.
+  </div>
+
+  <details class="stage" data-from="0" data-to="3" open>
+    <summary><span class="time">0-3′</span><span class="ttl">יישור מטרה</span></summary>
+    <div class="body">
+      <div class="say"><small>אמרי בקול:</small>"בסוף הפגישה יש לך דף סגור, מחיר סגור, תאריך סגור, והודעה ראשונה שיוצאת היום. מוכנה?"</div>
+      המשפט הזה משנה את כל האנרגיה של הפגישה.
+    </div>
+  </details>
+
+  <details class="stage" data-from="3" data-to="8">
+    <summary><span class="time">3-8′</span><span class="ttl">מבחן הלקוחה</span></summary>
+    <div class="body">
+      קראי את הדף שלה <b>בקול, כאילו את הלקוחה</b>. היא רק מקשיבה.<br>
+      היא תשמע בעצמה איפה זה צולע לפני שאמרת מילה.
+      <div class="say"><small>בסוף שאלי:</small>"מה שמעת?"</div>
+    </div>
+  </details>
+
+  <details class="stage" data-from="8" data-to="25">
+    <summary><span class="time">8-25′</span><span class="ttl">שיפצור לפי מה שמוכר</span></summary>
+    <div class="body">
+      לא סעיף-סעיף. לפי סדר חשיבות:
+      <ul>
+        <li><b>הכותרת</b> (הכי הרבה זמן, היא 80%) — הריצי מול 3 התבניות למטה, במילים של הקהל.</li>
+        <li><b>ההבטחה + הזמן</b> — B מצטלם? יש "תוך כמה"?</li>
+        <li><b>ה"למה איתך"</b> — יש זווית או שזה גנרי?</li>
+        <li><b>השאר</b> (שלבים, פורמט) — רק אם משהו זועק.</li>
+      </ul>
+      <div class="hgen">
+        <div class="tabs" id="tabs"></div>
+        <div id="tplfields"></div>
+        <div class="hout" id="hout"></div>
+        <button class="btn" onclick="copyHeadline()">📋 העתיקי את הכותרת</button>
+      </div>
+    </div>
+  </details>
+
+  <details class="stage" data-from="25" data-to="35">
+    <summary><span class="time">25-35′</span><span class="ttl">המחיר, בקול</span></summary>
+    <div class="body">
+      עברו על המספרים מול <b>3 הבדיקות + מבחן פי-10</b>.<br>
+      ואז הרגע החשוב: <b>היא אומרת את המחיר בקול</b>, כאילו את לקוחה ששאלה "כמה זה עולה?" — וחוזרות עד שהקול יציב.
+      <label class="fl">המחיר הסופי שנסגר</label>
+      <input class="f" data-s="price" placeholder="למשל ₪390 לשבוע">
+    </div>
+  </details>
+
+  <details class="stage" data-from="35" data-to="42">
+    <summary><span class="time">35-42′</span><span class="ttl">סגירת הפעולה</span></summary>
+    <div class="body">
+      <label class="fl">תאריך פתיחה (סופי, לא "בערך")</label>
+      <input class="f" data-s="date" placeholder="למשל: יום ראשון 17.8">
+      <label class="fl">כמה מקומות</label>
+      <input class="f" data-s="spots" placeholder="למשל: 8 מקומות">
+      <label class="fl">ההודעה הראשונה — מנסחות ביחד, מילה במילה</label>
+      <textarea class="f" data-s="msg" placeholder="זוכרת שסיפרתי לך? הנה זה מוכן. מה דעתך? [קישור]"></textarea>
+      <button class="btn" onclick="copyMsg()">📋 העתיקי את ההודעה</button>
+    </div>
+  </details>
+
+  <details class="stage" data-from="42" data-to="45">
+    <summary><span class="time">42-45′</span><span class="ttl">ההתחייבות</span></summary>
+    <div class="body">
+      "למי את שולחת את זה <b>היום</b>, ולמי מחר? תכתבי לי שמות."
+      <label class="fl">3 שמות (עם היומן)</label>
+      <textarea class="f" data-s="names" placeholder="1. \n2. \n3. "></textarea>
+      <div class="say">"מחכה לצילום מסך של התגובה הראשונה 😉"</div>
+    </div>
+  </details>
+
+  <div class="check">
+    <h3>הצ'קליסט — אף אחת לא יוצאת בלי הסגירה המלאה</h3>
+    <label><input type="checkbox" data-c="1"> כותרת מנצחת במילים של הקהל</label>
+    <label><input type="checkbox" data-c="2"> הבטחה B + "תוך כמה"</label>
+    <label><input type="checkbox" data-c="3"> מחיר נאמר בקול, יציב</label>
+    <label><input type="checkbox" data-c="4"> תאריך פתיחה סופי</label>
+    <label><input type="checkbox" data-c="5"> 3 שמות ליציאה היום/מחר</label>
+    <div class="done-all" id="doneAll">סגור. מוצר שמתחיל לזוז. 🚀</div>
+  </div>
+</div>
+
+<script>
+const TEMPLATES = {
+ "1":{ label:"תוצאה + זמן", vars:[
+    {k:"h_result",label:"התוצאה שהיא הכי רוצה",v:""},
+    {k:"h_time",label:"תוך כמה זמן",v:""},
+    {k:"h_obj",label:"החשש הכי גדול",v:""},
+  ], build:v=>`${v.h_result} תוך ${v.h_time}.\nגם אם ${v.h_obj}.` },
+ "2":{ label:"כאב + פתרון", vars:[
+    {k:"h_pain",label:"הבעיה הכואבת",v:""},
+    {k:"h_result",label:"התוצאה",v:""},
+    {k:"h_hate",label:"מה שהיא שונאת לעשות",v:""},
+  ], build:v=>`נמאס לך מ${v.h_pain}?\nככה תגיעי ל${v.h_result}\nבלי ${v.h_hate}.` },
+ "3":{ label:"ממצב לחלום", vars:[
+    {k:"h_from",label:"המצב המתסכל היום",v:""},
+    {k:"h_to",label:"התוצאה החלומית",v:""},
+    {k:"h_time",label:"תוך כמה זמן",v:""},
+    {k:"h_method",label:"שם השיטה שלה",v:""},
+  ], build:v=>`מ${v.h_from}\nל${v.h_to} תוך ${v.h_time}\nבעזרת ${v.h_method}.` },
+};
+let activeTpl="1";
+const tabs=document.getElementById("tabs");
+tabs.innerHTML=Object.keys(TEMPLATES).map(k=>'<button type="button" data-tpl="'+k+'">'+TEMPLATES[k].label+'</button>').join("");
+
+function key(){ return "coach:"+(document.getElementById("who").value.trim()||"ללא-שם"); }
+function saveAll(){
+  const o={_tpl:activeTpl, who:document.getElementById("who").value};
+  document.querySelectorAll("[data-hk]").forEach(e=>o["hk_"+e.dataset.hk]=e.value);
+  document.querySelectorAll("[data-s]").forEach(e=>o["s_"+e.dataset.s]=e.value);
+  document.querySelectorAll("[data-c]").forEach(e=>o["c_"+e.dataset.c]=e.checked);
+  try{localStorage.setItem(key(),JSON.stringify(o))}catch(e){}
+}
+function renderTpl(){
+  const t=TEMPLATES[activeTpl];
+  let saved={}; try{saved=JSON.parse(localStorage.getItem(key())||"{}")}catch(e){}
+  document.getElementById("tplfields").innerHTML=t.vars.map(v=>{
+    const val = saved["hk_"+v.k]!==undefined?saved["hk_"+v.k]:v.v;
+    return '<div class="tv"><label>'+v.label+'</label><input data-hk="'+v.k+'" value="'+String(val).replace(/"/g,'&quot;')+'"></div>';
+  }).join("");
+  document.querySelectorAll(".tabs button").forEach(b=>b.classList.toggle("on",b.dataset.tpl===activeTpl));
+  compute();
+}
+function compute(){
+  const t=TEMPLATES[activeTpl],vals={};
+  document.querySelectorAll("[data-hk]").forEach(e=>vals[e.dataset.hk]=e.value.trim()||"…");
+  document.getElementById("hout").textContent=t.build(vals);
+  saveAll();
+}
+function loadAll(){
+  let s={}; try{s=JSON.parse(localStorage.getItem(key())||"{}")}catch(e){}
+  if(s._tpl)activeTpl=s._tpl;
+  document.querySelectorAll("[data-s]").forEach(e=>{if(s["s_"+e.dataset.s]!==undefined)e.value=s["s_"+e.dataset.s]});
+  document.querySelectorAll("[data-c]").forEach(e=>{if(s["c_"+e.dataset.c]!==undefined)e.checked=s["c_"+e.dataset.c]});
+  renderTpl(); updateDone();
+}
+function updateDone(){
+  const all=[...document.querySelectorAll("[data-c]")].every(e=>e.checked);
+  document.getElementById("doneAll").style.display=all?"block":"none";
+}
+function copyHeadline(){ navigator.clipboard.writeText(document.getElementById("hout").textContent); }
+function copyMsg(){ navigator.clipboard.writeText(document.querySelector('[data-s="msg"]').value); }
+
+document.addEventListener("input",e=>{
+  if(e.target.dataset.hk) compute();
+  else if(e.target.id==="who") loadAll();
+  else if(e.target.dataset.s) saveAll();
+});
+document.addEventListener("change",e=>{ if(e.target.dataset.c){ saveAll(); updateDone(); }});
+document.addEventListener("click",e=>{ if(e.target.dataset.tpl){ activeTpl=e.target.dataset.tpl; saveAll(); renderTpl(); }});
+
+/* טיימר + הדגשת שלב נוכחי */
+let t0=null, tick=null;
+function toggleTimer(){
+  if(tick){ clearInterval(tick); tick=null; document.getElementById("timer").textContent="▶︎ המשך"; return; }
+  if(!t0) t0=Date.now();
+  tick=setInterval(()=>{
+    const sec=Math.floor((Date.now()-t0)/1000), m=Math.floor(sec/60);
+    document.getElementById("timer").textContent="⏸ "+String(m).padStart(2,"0")+":"+String(sec%60).padStart(2,"0");
+    document.querySelectorAll(".stage").forEach(s=>{
+      const on = m>=+s.dataset.from && m<+s.dataset.to;
+      s.classList.toggle("now",on);
+      if(on && !s.open) s.open=true;
+    });
+  },1000);
+}
+
+loadAll();
+</script>
+</body>
+</html>
