@@ -52,7 +52,7 @@ app.post("/api/publish", async (req,res)=>{
 
     let sheet = (PAGES[slug] && PAGES[slug].sheetId)
       ? { sheetId: PAGES[slug].sheetId, sheetUrl: PAGES[slug].sheetUrl }
-      : await createLeadSheet(d.bizName, d.email);
+      : await createLeadSheet(d.bizName, d.email, d.ownership);
 
     PAGES[slug] = { data:d, email:d.email, sheetId:sheet.sheetId, sheetUrl:sheet.sheetUrl, updated:Date.now() };
     await store.saveAll(PAGES);
