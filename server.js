@@ -81,11 +81,18 @@ app.post("/api/lead/:slug", async (req,res)=>{
   }catch(e){ console.error("lead err", e); res.status(500).json({ ok:false }); }
 });
 
+// ── מילוי אישי לפי משתתפת (מהמידע שלה מהקורס) ──
+let PREFILLS = {};
+app.get("/api/prefill/:token", (req,res)=>{
+  res.json(PREFILLS[req.params.token] || null);
+});
+
 app.get("/health", (_,res)=>res.json({ok:true, live:isLive()}));
 
 (async ()=>{
   await warmUp();
   try{ PAGES = await store.loadAll(); }catch(e){ console.error("load store err", e.message); }
+  try{ PREFILLS = await store.loadPrefills(); }catch(e){ console.error("load prefills err", e.message); }
   app.listen(PORT, ()=>
-    console.log("בנאי דף ההצעה רץ על "+BASE+"  (Google "+(isLive()?"מחובר":"מצב MOCK")+", "+Object.keys(PAGES).length+" דפים)"));
+    console.log("בנאי דף ההצעה רץ על "+BASE+"  (Google "+(isLive()?"מחובר":"מצב MOCK")+", "+Object.keys(PAGES).length+" דפים, "+Object.keys(PREFILLS).length+" מילויים)"));
 })();

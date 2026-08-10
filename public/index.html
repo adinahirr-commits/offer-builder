@@ -178,30 +178,76 @@ FIELDS.forEach((grp,gi)=>{
   board.appendChild(d);
 });
 
-const KEY="offerBuilderV3";
+/* מפתח אישי לכל משתתפת + טעינת המידע שלה */
+const params = new URLSearchParams(location.search);
+const TOKEN = params.get("p");
+const KEY = TOKEN ? ("offerBuilder_"+TOKEN) : "offerBuilderV3";
+const HK  = TOKEN ? ("offerHeadline_"+TOKEN) : "offerHeadlineV1";
+let activeTpl="1";
+
+/* ניקוי הדוגמה — משאירים רק ברירות מחדל גנריות (לא דנה) */
+const KEEP = new Set(["cta","benTitle","identifyTitle","leadTitle","leadSub","thanks","finalTitle","ownership"]);
+document.querySelectorAll("[data-k]").forEach(e=>{ if(!KEEP.has(e.dataset.k)) e.value=""; });
+Object.values(TEMPLATES).forEach(t=>t.vars.forEach(v=>v.v=""));
+
 function readAll(){const o={};document.querySelectorAll("[data-k]").forEach(e=>o[e.dataset.k]=e.value);return o;}
 function saveLocal(){try{localStorage.setItem(KEY,JSON.stringify(readAll()))}catch(e){}}
 function loadLocal(){try{const s=JSON.parse(localStorage.getItem(KEY)||"{}");
   document.querySelectorAll("[data-k]").forEach(e=>{if(s[e.dataset.k]!==undefined)e.value=s[e.dataset.k]})}catch(e){}}
+function applyData(obj){document.querySelectorAll("[data-k]").forEach(e=>{if(obj[e.dataset.k]!==undefined)e.value=obj[e.dataset.k]});}
 
 /* מחולל הכותרת */
-const HK="offerHeadlineV1";
-let activeTpl="1";
-function saveHK(){const o={_tpl:activeTpl};document.querySelectorAll("[data-hk]").forEach(e=>o[e.dataset.hk]=e.value);try{localStorage.setItem(HK,JSON.stringify(o))}catch(e){}}
-function computeHeadline(){const t=TEMPLATES[activeTpl],vals={};document.querySelectorAll("[data-hk]").forEach(e=>vals[e.dataset.hk]=(e.value.trim()||"…"));const hf=document.querySelector('[data-k="headline"]');if(hf)hf.value=t.build(vals);saveHK();saveLocal();}
-function renderTpl(){const t=TEMPLATES[activeTpl],box=document.getElementById("tplfields");if(!box)return;let saved={};try{saved=JSON.parse(localStorage.getItem(HK)||"{}")}catch(e){}box.innerHTML=t.vars.map(v=>{const val=saved["hk_"+v.k]!==undefined?saved["hk_"+v.k]:v.v;return '<div class="tv"><label>'+v.label+'</label><input data-hk="'+v.k+'" value="'+String(val).replace(/"/g,'&quot;')+'"></div>';}).join("");document.querySelectorAll(".hgen .tabs button").forEach(b=>b.classList.toggle("on",b.dataset.tpl===activeTpl));compute2();}
-function compute2(){const t=TEMPLATES[activeTpl],vals={};document.querySelectorAll("[data-hk]").forEach(e=>vals[e.dataset.hk]=e.value.trim()||"…");const o={_tpl:activeTpl};document.querySelectorAll("[data-hk]").forEach(e=>o["hk_"+e.dataset.hk]=e.value);try{localStorage.setItem(HK,JSON.stringify(o))}catch(e){}const hf=document.querySelector('[data-k="headline"]');if(hf)hf.value=t.build(vals);saveLocal();}
+function saveHK(){const o={_tpl:activeTpl};document.querySelectorAll("[data-hk]").forEach(e=>o["hk_"+e.dataset.hk]=e.value);try{localStorage.setItem(HK,JSON.stringify(o))}catch(e){}}
+function renderTpl(recompute){const t=TEMPLATES[activeTpl],box=document.getElementById("tplfields");if(!box)return;let saved={};try{saved=JSON.parse(localStorage.getItem(HK)||"{}")}catch(e){}box.innerHTML=t.vars.map(v=>{const val=saved["hk_"+v.k]!==undefined?saved["hk_"+v.k]:v.v;return '<div class="tv"><label>'+v.label+'</label><input data-hk="'+v.k+'" value="'+String(val).replace(/"/g,'&quot;')+'"></div>';}).join("");document.querySelectorAll(".hgen .tabs button").forEach(b=>b.classList.toggle("on",b.dataset.tpl===activeTpl));if(recompute)compute2();}
+function compute2(){const t=TEMPLATES[activeTpl],vals={};document.querySelectorAll("[data-hk]").forEach(e=>vals[e.dataset.hk]=e.value.trim()||"…");const hf=document.querySelector('[data-k="headline"]');if(hf)hf.value=t.build(vals);saveHK();saveLocal();}
+
+/* טקסט האינטרו לפי אם יש מילוי אישי */
+const noteEl=document.querySelector(".note");
+if(noteEl) noteEl.innerHTML = TOKEN
+  ? 'מילאנו לך כבר את הפרטים <b>מהעבודה שלך בקורס</b>. עברי, שני מה שתרצי, וזה שלך. מה שריק פשוט לא יופיע.'
+  : 'מלאי את השדות <b>בשפה של הלקוחה שלך</b>. מה שריק פשוט לא יופיע.';
 
 loadLocal();
 try{const s=JSON.parse(localStorage.getItem(HK)||"{}");if(s._tpl)activeTpl=s._tpl;}catch(e){}
-renderTpl();
+renderTpl(false);
+
+/* מילוי אישי + שאלות פתיחה על מה שחסר */
+function showIntroQuestions(qs, name){
+  const card=document.createElement("div");
+  card.style.cssText="background:var(--lime);border-radius:20px;padding:22px;margin-bottom:16px";
+  card.innerHTML='<div style="font-weight:800;font-size:1.1rem;margin-bottom:4px">היי'+(name?" "+name:"")+' 💛</div>'+
+    '<div style="font-size:.9rem;margin-bottom:14px">מילאנו כבר הרבה מהעבודה שלך בקורס. נשארו רק כמה שאלות קצרות, וזה מוכן:</div>'+
+    qs.map(q=>'<div class="fld"><label>'+q.q+'</label>'+(q.hint?'<div class="hint" style="color:#191A2E;opacity:.65">'+q.hint+'</div>':'')+
+      '<input data-mq="'+q.k+'" style="width:100%;font-family:inherit;font-size:1rem;padding:12px 14px;border:1.5px solid rgba(25,26,46,.2);border-radius:12px;background:#fff">'+
+      '</div>').join("");
+  const note=document.querySelector(".note");
+  note.parentNode.insertBefore(card, note.nextSibling);
+  card.addEventListener("input",e=>{
+    if(!e.target.dataset.mq) return;
+    const target=document.querySelector('[data-k="'+e.target.dataset.mq+'"]');
+    if(target){ target.value=e.target.value; saveLocal(); }
+  });
+}
+if(TOKEN){
+  fetch("/api/prefill/"+encodeURIComponent(TOKEN)).then(r=>r.json()).then(pf=>{
+    if(!pf) return;
+    const qs = pf._questions||[]; const name = pf._name||"";
+    const data = Object.assign({}, pf); delete data._questions; delete data._name;
+    if(!localStorage.getItem(KEY)){ applyData(data); saveLocal(); }
+    if(qs.length){
+      // מציגים רק שאלות שעדיין לא נענו (השדה ריק)
+      const open = qs.filter(q=>{ const el=document.querySelector('[data-k="'+q.k+'"]'); return el && !el.value.trim(); });
+      if(open.length) showIntroQuestions(open, name);
+    }
+  }).catch(()=>{});
+}
 
 document.addEventListener("input",e=>{
   if(e.target.dataset.hk) compute2();
   else if(e.target.dataset.k) saveLocal();
 });
 document.addEventListener("change",e=>{ if(e.target.dataset.k) saveLocal(); });
-document.addEventListener("click",e=>{ if(e.target.dataset.tpl){ activeTpl=e.target.dataset.tpl; saveHK(); renderTpl(); }});
+document.addEventListener("click",e=>{ if(e.target.dataset.tpl){ activeTpl=e.target.dataset.tpl; renderTpl(true); }});
 
 function preview(){
   document.getElementById("pv").srcdoc = PageEngine.buildPageHTML(readAll(), {});
