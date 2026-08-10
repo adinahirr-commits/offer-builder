@@ -34,6 +34,15 @@
   .hgen .tabs button.on{background:var(--pink);border-color:var(--pink)}
   .hgen .tv{margin-bottom:9px}.hgen .tv label{display:block;font-size:.82rem;font-weight:700;margin-bottom:3px}
   .hgen .tv input{width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:.95rem;background:#fff}
+  .palgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
+  .palbtn{display:flex;align-items:center;gap:8px;font-family:inherit;font-weight:700;font-size:.85rem;padding:10px 12px;border-radius:12px;border:2px solid var(--line);background:#fff;cursor:pointer;color:var(--ink)}
+  .palbtn.on{border-color:var(--ink);background:var(--canvas)}
+  .palbtn .dots{display:flex;gap:3px}
+  .palbtn .dots i{width:16px;height:16px;border-radius:50%;display:block;border:1px solid rgba(0,0,0,.08)}
+  .imgrow{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .imgbtn{display:inline-block;font-weight:700;font-size:.9rem;padding:10px 18px;border-radius:100px;border:1.5px dashed var(--soft);cursor:pointer;background:#fff}
+  .imgprev{width:64px;height:64px;object-fit:cover;border-radius:12px;border:1px solid var(--line)}
+  .imgdel{font-family:inherit;font-size:.8rem;font-weight:700;border:none;background:none;color:var(--soft);cursor:pointer;text-decoration:underline}
   .bar{position:fixed;bottom:0;left:0;right:0;background:rgba(251,250,247,.95);backdrop-filter:blur(8px);border-top:1px solid var(--line);padding:12px 16px;display:flex;gap:10px;justify-content:center;z-index:30}
   .btn{font-family:inherit;font-weight:800;font-size:1rem;padding:14px 22px;border-radius:100px;border:none;cursor:pointer;text-decoration:none;text-align:center}
   .btn.pink{background:var(--pink);color:var(--ink)}.btn.dark{background:var(--ink);color:#fff}
@@ -108,6 +117,12 @@ const FIELDS = [
      ], v:"shared"},
  ]},
 
+ {sec:"🎨 העיצוב שלך", cap:"בחרי את הצבעים של המותג שלך והוסיפי תמונות. הדף הזה שלך, לא של אף אחת אחרת.", f:[
+   {t:"palettePicker"},
+   {t:"imgPicker", k:"aboutImg", label:"תמונה שלך", hint:"מופיעה ליד ״מי את״. הכי טוב תמונה שלך מחייכת"},
+   {t:"imgPicker", k:"heroImg", label:"תמונה של המוצר או האווירה", hint:"מופיעה בראש הדף. לא חובה"},
+ ]},
+
  {sec:"1️⃣ הרגש · הכותרת והחלום", cap:"קודם מציתים את ההתרגשות: איך החיים נראים אחרי המוצר שלך. שמחה, רוגע, דופמין.", f:[
    {k:"eyebrow",  t:"input", label:"למי הדף מדבר", hint:"שורה קטנה", v:"לאמהות שרוצות את הערב שלהן בחזרה"},
    {t:"headlineGen"},
@@ -165,6 +180,26 @@ FIELDS.forEach((grp,gi)=>{
   d.innerHTML = '<summary>'+grp.sec+'</summary><div class="body">'+cap+
     grp.f.map(f=>{
       if(f.t==="headlineGen") return HGEN;
+      if(f.t==="palettePicker"){
+        return '<div class="fld"><label>ערכת הצבעים</label>'+
+          '<input type="hidden" data-k="palette" value="">'+
+          '<div class="palgrid">'+Object.keys(PageEngine.PALETTES).map(k=>{
+            const p=PageEngine.PALETTES[k];
+            return '<button type="button" class="palbtn" data-pal="'+k+'">'+
+              '<span class="dots"><i style="background:'+p.accent+'"></i><i style="background:'+p.ident+'"></i><i style="background:'+p.ink+'"></i></span>'+
+              '<span>'+p.name+'</span></button>';
+          }).join("")+'</div></div>';
+      }
+      if(f.t==="imgPicker"){
+        return '<div class="fld"><label>'+f.label+'</label>'+
+          (f.hint?'<div class="hint">'+f.hint+'</div>':'')+
+          '<input type="hidden" data-k="'+f.k+'" value="">'+
+          '<div class="imgrow" data-imgrow="'+f.k+'">'+
+            '<label class="imgbtn">📷 בחרי תמונה<input type="file" accept="image/*" data-imgfile="'+f.k+'" style="display:none"></label>'+
+            '<img class="imgprev" data-imgprev="'+f.k+'" style="display:none">'+
+            '<button type="button" class="imgdel" data-imgdel="'+f.k+'" style="display:none">הסרה ✕</button>'+
+          '</div></div>';
+      }
       let el;
       if(f.t==="choice"){
         el = '<select data-k="'+f.k+'">'+f.options.map(o=>'<option value="'+o.v+'"'+(o.v===f.v?' selected':'')+'>'+o.label+'</option>').join("")+'</select>';
@@ -242,12 +277,64 @@ if(TOKEN){
   }).catch(()=>{});
 }
 
+/* ── ערכת צבעים ── */
+function refreshPal(){
+  const cur=(document.querySelector('[data-k="palette"]')||{}).value || PageEngine.DEFAULT_PALETTE;
+  document.querySelectorAll(".palbtn").forEach(b=>b.classList.toggle("on", b.dataset.pal===cur));
+}
+refreshPal();
+
+/* ── תמונות: כיווץ בדפדפן → העלאה ── */
+function refreshImg(k){
+  const v=(document.querySelector('[data-k="'+k+'"]')||{}).value||"";
+  const prev=document.querySelector('[data-imgprev="'+k+'"]'), del=document.querySelector('[data-imgdel="'+k+'"]');
+  if(prev){ prev.src=v; prev.style.display=v?"block":"none"; }
+  if(del) del.style.display=v?"inline":"none";
+}
+["aboutImg","heroImg"].forEach(refreshImg);
+
+function shrink(file){
+  return new Promise((res,rej)=>{
+    const img=new Image();
+    img.onload=()=>{
+      const MAX=1600, r=Math.min(1, MAX/Math.max(img.width,img.height));
+      const c=document.createElement("canvas");
+      c.width=Math.round(img.width*r); c.height=Math.round(img.height*r);
+      c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+      res(c.toDataURL("image/jpeg",.85));
+    };
+    img.onerror=rej;
+    img.src=URL.createObjectURL(file);
+  });
+}
+async function uploadImg(k, file){
+  const row=document.querySelector('[data-imgrow="'+k+'"] .imgbtn');
+  const orig=row.childNodes[0].textContent; row.childNodes[0].textContent="מעלה... ";
+  try{
+    const dataUrl=await shrink(file);
+    const r=await fetch("/api/upload",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({dataUrl})});
+    const j=await r.json();
+    if(!j.ok) throw new Error(j.error||"שגיאה");
+    document.querySelector('[data-k="'+k+'"]').value=j.url;
+    saveLocal(); refreshImg(k);
+  }catch(e){ alert("ההעלאה לא הצליחה: "+e.message); }
+  row.childNodes[0].textContent=orig;
+}
+
 document.addEventListener("input",e=>{
   if(e.target.dataset.hk) compute2();
   else if(e.target.dataset.k) saveLocal();
 });
-document.addEventListener("change",e=>{ if(e.target.dataset.k) saveLocal(); });
-document.addEventListener("click",e=>{ if(e.target.dataset.tpl){ activeTpl=e.target.dataset.tpl; renderTpl(true); }});
+document.addEventListener("change",e=>{
+  if(e.target.dataset.imgfile && e.target.files[0]){ uploadImg(e.target.dataset.imgfile, e.target.files[0]); e.target.value=""; return; }
+  if(e.target.dataset.k) saveLocal();
+});
+document.addEventListener("click",e=>{
+  const palBtn = e.target.closest && e.target.closest(".palbtn");
+  if(palBtn){ document.querySelector('[data-k="palette"]').value=palBtn.dataset.pal; saveLocal(); refreshPal(); return; }
+  if(e.target.dataset.imgdel){ document.querySelector('[data-k="'+e.target.dataset.imgdel+'"]').value=""; saveLocal(); refreshImg(e.target.dataset.imgdel); return; }
+  if(e.target.dataset.tpl){ activeTpl=e.target.dataset.tpl; renderTpl(true); }
+});
 
 function preview(){
   document.getElementById("pv").srcdoc = PageEngine.buildPageHTML(readAll(), {});

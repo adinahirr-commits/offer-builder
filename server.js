@@ -11,7 +11,7 @@ if(process.env.GOOGLE_ADC_JSON && !process.env.GOOGLE_APPLICATION_CREDENTIALS){
 const express = require("express");
 const path = require("path");
 const { buildPageHTML } = require("./lib/page");
-const { createLeadSheet, appendLead, isLive, warmUp } = require("./lib/google");
+const { createLeadSheet, appendLead, uploadImage, isLive, warmUp } = require("./lib/google");
 const store = require("./lib/store");
 
 const app = express();
@@ -79,6 +79,18 @@ app.post("/api/lead/:slug", async (req,res)=>{
     await appendLead(rec.sheetId, req.body||{});
     res.json({ ok:true });
   }catch(e){ console.error("lead err", e); res.status(500).json({ ok:false }); }
+});
+
+// ── העלאת תמונה (מכווצת בדפדפן → base64) ──
+app.post("/api/upload", express.json({ limit:"8mb" }), async (req,res)=>{
+  try{
+    const m = /^data:image\/(png|jpeg|webp);base64,(.+)$/.exec((req.body||{}).dataUrl||"");
+    if(!m) return res.status(400).json({error:"תמונה לא תקינה"});
+    const buf = Buffer.from(m[2], "base64");
+    if(buf.length > 6*1024*1024) return res.status(413).json({error:"התמונה גדולה מדי"});
+    const url = await uploadImage(buf, m[1]==="jpeg"?"jpeg":m[1]);
+    res.json({ ok:true, url });
+  }catch(e){ console.error("upload", e.message); res.status(500).json({error:"ההעלאה נכשלה"}); }
 });
 
 // ── מילוי אישי לפי משתתפת (מהמידע שלה מהקורס) ──
