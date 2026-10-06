@@ -15,7 +15,7 @@ const { createLeadSheet, appendLead, uploadImage, isLive, warmUp } = require("./
 const store = require("./lib/store");
 
 const app = express();
-app.use(express.json({ limit:"400kb" }));
+app.use(express.json({ limit:"8mb" }));   // תמונות (base64) עוברות גם דרך הפרסר הגלובלי — מגבלה נמוכה כאן חסמה כל העלאה מהטלפון
 
 // CORS פתוח לקליטת לידים
 app.use((req,res,next)=>{

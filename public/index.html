@@ -297,13 +297,13 @@ function shrink(file){
   return new Promise((res,rej)=>{
     const img=new Image();
     img.onload=()=>{
-      const MAX=1600, r=Math.min(1, MAX/Math.max(img.width,img.height));
+      const MAX=1400, r=Math.min(1, MAX/Math.max(img.width,img.height));
       const c=document.createElement("canvas");
       c.width=Math.round(img.width*r); c.height=Math.round(img.height*r);
       c.getContext("2d").drawImage(img,0,0,c.width,c.height);
-      res(c.toDataURL("image/jpeg",.85));
+      res(c.toDataURL("image/jpeg",.82));
     };
-    img.onerror=rej;
+    img.onerror=()=>rej(new Error("הדפדפן לא מצליח לקרוא את הקובץ. נסי לצלם צילום מסך של התמונה ולהעלות אותו"));
     img.src=URL.createObjectURL(file);
   });
 }
@@ -313,7 +313,7 @@ async function uploadImg(k, file){
   try{
     const dataUrl=await shrink(file);
     const r=await fetch("/api/upload",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({dataUrl})});
-    const j=await r.json();
+    let j={}; try{ j=await r.json(); }catch(e){ j={error:"השרת לא ענה כמו שצריך ("+r.status+"). נסי שוב בעוד רגע"}; }
     if(!j.ok) throw new Error(j.error||"שגיאה");
     document.querySelector('[data-k="'+k+'"]').value=j.url;
     saveLocal(); refreshImg(k);
