@@ -15,7 +15,7 @@ const { createLeadSheet, appendLead, uploadImage, isLive, warmUp } = require("./
 const store = require("./lib/store");
 
 const app = express();
-app.use(express.json({ limit:"8mb" }));   // תמונות (base64) עוברות גם דרך הפרסר הגלובלי — מגבלה נמוכה כאן חסמה כל העלאה מהטלפון
+app.use(express.json({ limit:"24mb" }));  // תמונות (base64) עוברות גם דרך הפרסר הגלובלי — מגבלה נמוכה כאן חסמה כל העלאה מהטלפון
 
 // CORS פתוח לקליטת לידים
 app.use((req,res,next)=>{
@@ -82,15 +82,41 @@ app.post("/api/lead/:slug", async (req,res)=>{
 });
 
 // ── העלאת תמונה (מכווצת בדפדפן → base64) ──
-app.post("/api/upload", express.json({ limit:"8mb" }), async (req,res)=>{
+app.post("/api/upload", async (req,res)=>{
+  const tag = "upload["+((req.body||{}).token||"-")+"]";
   try{
-    const m = /^data:image\/(png|jpeg|webp);base64,(.+)$/.exec((req.body||{}).dataUrl||"");
+    const m = /^data:([a-z0-9.+\-\/]+);base64,(.+)$/i.exec((req.body||{}).dataUrl||"");
     if(!m) return res.status(400).json({error:"תמונה לא תקינה"});
-    const buf = Buffer.from(m[2], "base64");
-    if(buf.length > 6*1024*1024) return res.status(413).json({error:"התמונה גדולה מדי"});
-    const url = await uploadImage(buf, m[1]==="jpeg"?"jpeg":m[1]);
+    let buf = Buffer.from(m[2], "base64");
+    const srcType = m[1].toLowerCase();
+    console.log(tag, "received", srcType, Math.round(buf.length/1024)+"KB", "raw="+!!(req.body||{}).raw);
+    if(buf.length > 16*1024*1024) return res.status(413).json({error:"התמונה גדולה מדי (עד 16MB)"});
+    buf = await normalizeImage(buf, srcType);           // כל פורמט (גם HEIC) → JPEG עד 1600px, מסובב נכון
+    const url = await uploadImage(buf, "jpeg");
+    console.log(tag, "ok", Math.round(buf.length/1024)+"KB →", url);
     res.json({ ok:true, url });
-  }catch(e){ console.error("upload", e.message); res.status(500).json({error:"ההעלאה נכשלה"}); }
+  }catch(e){ console.error(tag, "failed:", e.message); res.status(500).json({error:"לא הצלחתי לעבד את התמונה. נסי תמונה אחרת או צילום מסך שלה"}); }
+});
+
+// המרה בשרת: HEIC/HEIF (אייפון, סמסונג) דרך heic-convert, כל השאר דרך sharp. הדפדפן לא צריך לדעת לקרוא את הקובץ.
+async function normalizeImage(buf, type){
+  const sharp = require("sharp");
+  const head = buf.subarray(4, 12).toString("latin1");
+  const isHeic = /heic|heif|heix|hevc|mif1|msf1/i.test(type) || /^ftyp(heic|heix|hevc|mif1|msf1)/.test(head);
+  if(isHeic){
+    const convert = require("heic-convert");
+    buf = Buffer.from(await convert({ buffer: buf, format: "JPEG", quality: 0.9 }));
+  }
+  return sharp(buf, { failOn:"none" }).rotate()
+    .resize({ width:1600, height:1600, fit:"inside", withoutEnlargement:true })
+    .jpeg({ quality:82, mozjpeg:true }).toBuffer();
+}
+
+// דיווח מהדפדפן: מה קרה בהעלאה אצל המשתתפת (כדי לא לנחש מרחוק)
+app.post("/api/log", (req,res)=>{
+  const b = req.body || {};
+  console.log("client["+(b.token||"-")+"]", b.stage||"", b.msg||"", "|", b.file||"", "|", (b.ua||"").slice(0,120));
+  res.json({ok:true});
 });
 
 // ── מילוי אישי לפי משתתפת (מהמידע שלה מהקורס) ──

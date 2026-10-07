@@ -213,7 +213,7 @@ FIELDS.forEach((grp,gi)=>{
           (f.hint?'<div class="hint">'+f.hint+'</div>':'')+
           '<input type="hidden" data-k="'+f.k+'" value="">'+
           '<div class="imgrow" data-imgrow="'+f.k+'">'+
-            '<label class="imgbtn">📷 בחרי תמונה<input type="file" accept="image/*" data-imgfile="'+f.k+'" style="display:none"></label>'+
+            '<label class="imgbtn">📷 בחרי תמונה<input type="file" accept="image/*,.heic,.heif" data-imgfile="'+f.k+'" style="display:none"></label>'+
             '<img class="imgprev" data-imgprev="'+f.k+'" style="display:none">'+
             '<button type="button" class="imgdel" data-imgdel="'+f.k+'" style="display:none">הסרה ✕</button>'+
           '</div></div>';
@@ -311,31 +311,53 @@ function refreshImg(k){
 }
 ["aboutImg","heroImg"].forEach(refreshImg);
 
+function clientLog(stage,msg,file){
+  try{ fetch("/api/log",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({token:TOKEN,stage,msg:String(msg||""),file:file?(file.name+" "+file.type+" "+Math.round(file.size/1024)+"KB"):"",ua:navigator.userAgent})}); }catch(e){}
+}
+/* כיווץ בדפדפן כשאפשר (חוסך העלאה); אם הדפדפן לא יודע לקרוא את הקובץ (HEIC וכו') — שולחים אותו כמו שהוא והשרת ממיר */
 function shrink(file){
   return new Promise((res,rej)=>{
     const img=new Image();
+    const u=URL.createObjectURL(file);
     img.onload=()=>{
-      const MAX=1400, r=Math.min(1, MAX/Math.max(img.width,img.height));
-      const c=document.createElement("canvas");
-      c.width=Math.round(img.width*r); c.height=Math.round(img.height*r);
-      c.getContext("2d").drawImage(img,0,0,c.width,c.height);
-      res(c.toDataURL("image/jpeg",.82));
+      try{
+        const MAX=1400, r=Math.min(1, MAX/Math.max(img.width,img.height));
+        const c=document.createElement("canvas");
+        c.width=Math.round(img.width*r); c.height=Math.round(img.height*r);
+        c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+        const out=c.toDataURL("image/jpeg",.82);
+        if(out.length<1000) throw new Error("canvas empty");
+        res(out);
+      }catch(e){ rej(e); }
+      finally{ URL.revokeObjectURL(u); }
     };
-    img.onerror=()=>rej(new Error("הדפדפן לא מצליח לקרוא את הקובץ. נסי לצלם צילום מסך של התמונה ולהעלות אותו"));
-    img.src=URL.createObjectURL(file);
+    img.onerror=()=>{ URL.revokeObjectURL(u); rej(new Error("browser cannot decode")); };
+    img.src=u;
+  });
+}
+function readRaw(file){
+  return new Promise((res,rej)=>{
+    if(file.size>16*1024*1024) return rej(new Error("התמונה גדולה מדי (עד 16MB)"));
+    const fr=new FileReader();
+    fr.onload=()=>res(fr.result); fr.onerror=()=>rej(new Error("לא הצלחתי לקרוא את הקובץ"));
+    fr.readAsDataURL(file);
   });
 }
 async function uploadImg(k, file){
   const row=document.querySelector('[data-imgrow="'+k+'"] .imgbtn');
   const orig=row.childNodes[0].textContent; row.childNodes[0].textContent="מעלה... ";
+  clientLog("start","",file);
   try{
-    const dataUrl=await shrink(file);
-    const r=await fetch("/api/upload",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({dataUrl})});
+    let dataUrl, raw=false;
+    try{ dataUrl=await shrink(file); }
+    catch(e){ clientLog("shrink-failed",e.message,file); dataUrl=await readRaw(file); raw=true; }
+    const r=await fetch("/api/upload",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({dataUrl,raw,token:TOKEN})});
     let j={}; try{ j=await r.json(); }catch(e){ j={error:"השרת לא ענה כמו שצריך ("+r.status+"). נסי שוב בעוד רגע"}; }
     if(!j.ok) throw new Error(j.error||"שגיאה");
     document.querySelector('[data-k="'+k+'"]').value=j.url;
     saveLocal(); refreshImg(k);
-  }catch(e){ alert("ההעלאה לא הצליחה: "+e.message); }
+    clientLog("done",j.url,file);
+  }catch(e){ clientLog("failed",e.message,file); alert("ההעלאה לא הצליחה: "+e.message); }
   row.childNodes[0].textContent=orig;
 }
 
