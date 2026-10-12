@@ -13,6 +13,8 @@
   .top{background:var(--ink);color:var(--canvas);padding:22px;text-align:center;position:sticky;top:0;z-index:20}
   .top h1{font-size:1.3rem;font-weight:800}.top p{font-size:.9rem;opacity:.8;margin-top:4px}
   .board{max-width:640px;margin:0 auto;padding:18px 16px 150px}
+  .fld.fx{background:#FBFAF7;border:1px dashed var(--line);border-radius:12px;padding:10px 12px}
+  .fxtag{font-size:.68rem;font-weight:700;color:var(--soft);background:var(--sky);padding:2px 8px;border-radius:100px;vertical-align:middle}
   .note{background:var(--pink-soft);border-radius:14px;padding:14px 18px;font-size:.92rem;margin-bottom:16px}
   .grp{background:#fff;border:1px solid var(--line);border-radius:20px;margin-bottom:14px;overflow:hidden}
   .grp>summary{list-style:none;cursor:pointer;padding:18px 22px;font-weight:800;font-size:1.08rem;display:flex;align-items:center}
@@ -115,9 +117,16 @@ const HGEN = '<div class="hgen">'+
   '</div><div id="tplfields"></div></div>';
 
 const FIELDS = [
- {sec:"פרטי העסק שלך", f:[
+ {sec:"פרטי העסק שלך", cap:"כל מילה בדף ניתנת לשינוי, גם המילים הקבועות. הן מסומנות ✍️ ויושבות ליד המקום שבו הן מופיעות בדף.", f:[
    {k:"bizName", t:"input", label:"שם העסק שלך", hint:"מה שיופיע למעלה בדף", v:"המטבח של דנה"},
    {k:"email",   t:"input", label:"המייל שלך (לגוגל)", hint:"לכאן תגיע טבלת הלידים שלך", v:""},
+   {k:"gender", t:"choice", label:"הדף פונה ל...", hint:"מחליף את הנוסחים הקבועים בהתאם (דברי/דבר/דברו, מייסדות/מייסדים). מה שכבר שינית בעצמך נשאר",
+     options:[
+       {v:"f", label:"לנשים (את, השאירי)"},
+       {v:"m", label:"לגברים (אתה, השאר)"},
+       {v:"p", label:"לכולם (אתם, השאירו)"},
+     ], v:"f"},
+   {k:"txtTopLink",   t:"input", fx:true, label:"הקישור הקטן למעלה בדף, ליד שם העסק", hint:"", v:PageEngine.TEXTS.txtTopLink},
    {k:"ownership", t:"choice", label:"איפה יישמרו הלידים שלך?",
      hint:"בכל מקרה רק את רואה את הלידים שלך",
      options:[
@@ -137,26 +146,6 @@ const FIELDS = [
        {k:"pos", t:"select", label:"איפה בדף", options: PageEngine.IMG_POS},
        {k:"cap", t:"input", label:"כיתוב מתחת לתמונה", hint:"לא חובה"},
      ]},
- ]},
-
- {sec:"✍️ המילים הקבועות בדף", cap:"כל מילה בדף ניתנת לשינוי. למשל ״מחיר מייסדים״ במקום ״מחיר מייסדות״, או ״דבר איתי״ במקום ״דברי איתי״. בחרי למי הדף פונה, ותקני ידנית מה שתרצי.", f:[
-   {k:"gender", t:"choice", label:"הדף פונה ל...", hint:"מחליף את הנוסחים הקבועים בהתאם. מה שכבר שינית בעצמך נשאר",
-     options:[
-       {v:"f", label:"לנשים (את, השאירי)"},
-       {v:"m", label:"לגברים (אתה, השאר)"},
-       {v:"p", label:"לכולם (אתם, השאירו)"},
-     ], v:"f"},
-   {k:"txtTopLink",   t:"input", label:"הקישור הקטן למעלה בדף", hint:"", v:PageEngine.TEXTS.txtTopLink},
-   {k:"txtFullPrice", t:"input", label:"״מחיר מלא״ (ליד המחיר המחוק)", hint:"", v:PageEngine.TEXTS.txtFullPrice},
-   {k:"txtFounders",  t:"input", label:"״מחיר מייסדות״ (מעל המחיר המוזל)", hint:"למשל: מחיר מייסדים 🌱, מחיר השקה, מחיר למחזור הראשון", v:PageEngine.TEXTS.txtFounders},
-   {k:"txtStart",     t:"input", label:"לפני התאריך", hint:"מופיע כך: 📅 מתחילים ב-25.10", v:PageEngine.TEXTS.txtStart},
-   {k:"txtPlaces",    t:"input", label:"אחרי מספר המקומות", hint:"מופיע כך: 🪑 5 מקומות", v:PageEngine.TEXTS.txtPlaces},
-   {k:"txtStages",    t:"input", label:"השורה הקטנה מעל השלבים", hint:"", v:PageEngine.TEXTS.txtStages},
-   {k:"txtHow",       t:"input", label:"השורה הקטנה מעל ״איך זה עובד״ (כשאין שלבים)", hint:"", v:PageEngine.TEXTS.txtHow},
-   {k:"txtFormName",  t:"input", label:"בטופס: שדה השם", hint:"", v:PageEngine.TEXTS.txtFormName},
-   {k:"txtFormPhone", t:"input", label:"בטופס: שדה הטלפון", hint:"", v:PageEngine.TEXTS.txtFormPhone},
-   {k:"txtFormNote",  t:"input", label:"בטופס: שדה ההערה", hint:"", v:PageEngine.TEXTS.txtFormNote},
-   {k:"txtFooter",    t:"input", label:"השורה בתחתית הדף", hint:"", v:PageEngine.TEXTS.txtFooter},
  ]},
 
  {sec:"1️⃣ הרגש · הכותרת והחלום", cap:"קודם מציתים את ההתרגשות: איך החיים נראים אחרי המוצר שלך. שמחה, רוגע, דופמין.", f:[
@@ -196,6 +185,7 @@ const FIELDS = [
  {sec:"🪜 השלבים, במילים שלה", cap:"כל שלב מקבל שם של תועלת או של שיטה (״מה יוצא לי מזה?״), ושורה אחת של החיים אחריו. במילים שלה, לא במילים מקצועיות.", f:[
    {k:"mechTitle", t:"input", label:"שם התוכנית או השיטה שלך", hint:"השם שהיא רואה את עצמה בו", v:"שיטת המקרר המלא"},
    {k:"mechText",  t:"area",  label:"משפט פתיחה על הדרך", hint:"לא חובה. קצר", v:"ככה זה עובד, צעד אחרי צעד:"},
+   {k:"txtStages",    t:"input", fx:true, label:"השורה הקטנה מעל השלבים", hint:"", v:PageEngine.TEXTS.txtStages},
    {k:"stage1n", t:"input", label:"שלב 1 · השם", hint:"מה יוצא לה מזה, לא מה עושים", v:""},
    {k:"stage1a", t:"input", label:"שלב 1 · החיים אחריו", hint:"שורה אחת: מה היא רואה / מרגישה אחרי השלב הזה", v:""},
    {k:"stage2n", t:"input", label:"שלב 2 · השם", hint:"", v:""},
@@ -207,15 +197,20 @@ const FIELDS = [
    {k:"stage5n", t:"input", label:"שלב 5 · השם", hint:"לא חובה", v:""},
    {k:"stage5a", t:"input", label:"שלב 5 · החיים אחריו", hint:"", v:""},
    {k:"formatLine", t:"input", label:"המבנה בשורה אחת", hint:"למשל: 6 מפגשי זום בקבוצה קטנה, פעם בשבוע", v:""},
+   {k:"txtHow",       t:"input", fx:true, label:"השורה הקטנה מעל ״איך זה עובד״ (כשאין שלבים)", hint:"", v:PageEngine.TEXTS.txtHow},
  ]},
 
  {sec:"💎 ההצעה · מחיר, תאריך ומקומות", cap:"מחיר מלא ומחיר מייסדות ל-3 עד 5 הראשונות. בלי תאריך זה ״מתישהו״, ומתישהו זה אף פעם.", f:[
    {k:"priceLabel", t:"input", label:"תווית המחיר", hint:"", v:"ההשקעה"},
    {k:"price",      t:"input", label:"המחיר המלא", hint:"המחיר האמיתי של התוכנית. למשל: ₪2,400", v:"₪390"},
+   {k:"txtFullPrice", t:"input", fx:true, label:"המילים ליד המחיר המחוק", hint:"מופיע כך: מחיר מלא ₪2,400", v:PageEngine.TEXTS.txtFullPrice},
    {k:"foundersPrice", t:"input", label:"מחיר מייסדות", hint:"למחזור הראשון. למשל: ₪1,200. גרסת בטא? אפשר גם נמוך מאוד, תמורת פידבק", v:""},
+   {k:"txtFounders",  t:"input", fx:true, label:"הכיתוב מעל המחיר המוזל", hint:"למשל: מחיר המייסדים 🌱, מחיר השקה, מחיר למחזור הראשון", v:PageEngine.TEXTS.txtFounders},
    {k:"foundersNote",  t:"input", label:"למי ובתמורה למה", hint:"3 עד 5 זו דוגמה. ליווי אישי: 3 עד 5. קבוצה: המחזור הראשון. אפליקציה: גרסת בטא", v:"ל-3 עד 5 הראשונות בלבד, בתמורה לפידבק לאורך הדרך ועדות בסיום"},
    {k:"startDate", t:"input", label:"מתי מתחילים", hint:"תאריך קרוב, 3 עד 4 שבועות. למשל: יום ראשון 25.10, 20:30", v:""},
+   {k:"txtStart",     t:"input", fx:true, label:"המילים לפני התאריך", hint:"מופיע כך: 📅 מתחילים ב-25.10", v:PageEngine.TEXTS.txtStart},
    {k:"places",    t:"input", label:"כמה מקומות", hint:"מספר קטן ויפה, 4 עד 8", v:""},
+   {k:"txtPlaces",    t:"input", fx:true, label:"המילה אחרי מספר המקומות", hint:"מופיע כך: 🪑 5 מקומות", v:PageEngine.TEXTS.txtPlaces},
    {k:"includes",   t:"area",  label:"מה כלול", hint:"שורה לכל פריט", v:"5 ארוחות מלאות\nמשלוח חינם\nהחלפת מנה בלי תוספת"},
    {k:"offerNote",  t:"input", label:"משפט ביטחון", hint:"", v:"לא מתאים? מחזירים לך את הכסף."},
    {k:"faqQ", t:"input", label:"שאלה שחוזרת", hint:"אפשר להשאיר ריק", v:"כמה זמן מראש להזמין?"},
@@ -225,10 +220,15 @@ const FIELDS = [
  {sec:"סגירה · טופס ומכתב", f:[
    {k:"leadTitle", t:"input", label:"כותרת מעל הטופס", hint:"", v:"רוצה שנתחיל?"},
    {k:"leadSub",   t:"input", label:"משפט מתחת", hint:"", v:"השאירי פרטים ואחזור אלייך היום."},
+   {k:"txtFormName",  t:"input", fx:true, label:"בטופס: שדה השם", hint:"", v:PageEngine.TEXTS.txtFormName},
+   {k:"txtFormPhone", t:"input", fx:true, label:"בטופס: שדה הטלפון", hint:"", v:PageEngine.TEXTS.txtFormPhone},
+   {k:"txtFormNote",  t:"input", fx:true, label:"בטופס: שדה ההערה", hint:"", v:PageEngine.TEXTS.txtFormNote},
+   {k:"txtFormBtn",   t:"input", fx:true, label:"בטופס: כפתור השליחה", hint:"ריק = אותו טקסט כמו הכפתור בראש הדף", v:""},
    {k:"thanks",    t:"input", label:"מה יופיע אחרי שמילאו", hint:"", v:"קיבלתי! אחזור אלייך היום 💛"},
    {k:"finalTitle", t:"input", label:"כותרת מכתב הסגירה", hint:"", v:"מילה אחרונה ממני"},
    {k:"finalText",  t:"area",  label:"כמה שורות מהלב", hint:"למה את עושה את זה", v:"אני יודעת איך זה מרגיש.\nלרצות לתת להם את הטוב ביותר,\nובלי כוח לזה.\nתני לי לקחת את זה ממך."},
    {k:"sig",        t:"input", label:"חתימה", hint:"", v:"באהבה, דנה 💛"},
+   {k:"txtFooter",    t:"input", fx:true, label:"השורה הקטנה בתחתית הדף, אחרי שם העסק", hint:"", v:PageEngine.TEXTS.txtFooter},
  ]},
 ];
 
@@ -274,7 +274,7 @@ FIELDS.forEach((grp,gi)=>{
       } else {
         el = '<input data-k="'+f.k+'" value="'+f.v.replace(/"/g,'&quot;')+'">';
       }
-      return '<div class="fld"><label>'+f.label+'</label>'+(f.hint?'<div class="hint">'+f.hint+'</div>':'')+el+
+      return '<div class="fld'+(f.fx?' fx':'')+'"><label>'+(f.fx?'<span class="fxtag">✍️ מילה קבועה</span> ':'')+f.label+'</label>'+(f.hint?'<div class="hint">'+f.hint+'</div>':'')+el+
         (f.warn?'<div class="warn" data-warn="'+f.k+'" style="display:none">'+f.warn+'</div>':'')+'</div>';
     }).join("")+'</div>';
   board.appendChild(d);
@@ -326,7 +326,7 @@ let activeTpl="1";
 
 /* ניקוי הדוגמה — משאירים רק ברירות מחדל גנריות (לא דנה) */
 const KEEP = new Set(["cta","benTitle","identifyTitle","leadTitle","leadSub","thanks","finalTitle","ownership","foundersNote","priceLabel","gender",
-  "txtTopLink","txtFullPrice","txtFounders","txtStart","txtPlaces","txtStages","txtHow","txtFormName","txtFormPhone","txtFormNote","txtFooter"]);
+  "txtTopLink","txtFullPrice","txtFounders","txtStart","txtPlaces","txtStages","txtHow","txtFormName","txtFormPhone","txtFormNote","txtFormBtn","txtFooter"]);
 document.querySelectorAll("[data-k]").forEach(e=>{ if(!KEEP.has(e.dataset.k)) e.value=""; });
 Object.values(TEMPLATES).forEach(t=>t.vars.forEach(v=>v.v=""));
 
@@ -367,8 +367,8 @@ function compute2(){const t=TEMPLATES[activeTpl],vals={};document.querySelectorA
 /* טקסט האינטרו לפי אם יש מילוי אישי */
 const noteEl=document.querySelector(".note");
 if(noteEl) noteEl.innerHTML = TOKEN
-  ? 'מילאנו לך כבר את הפרטים <b>מהעבודה שלך בקורס</b>. עברי, שני מה שתרצי, וזה שלך. מה שריק פשוט לא יופיע. כל מילה בדף ניתנת לשינוי, גם המילים הקבועות (במקטע ✍️).'
-  : 'מלאי את השדות <b>בשפה של הלקוחה שלך</b>. מה שריק פשוט לא יופיע. כל מילה בדף ניתנת לשינוי, גם המילים הקבועות (במקטע ✍️).';
+  ? 'מילאנו לך כבר את הפרטים <b>מהעבודה שלך בקורס</b>. עברי, שני מה שתרצי, וזה שלך. מה שריק פשוט לא יופיע. כל מילה בדף ניתנת לשינוי, גם המילים הקבועות (מסומנות ✍️, ליד המקום שבו הן מופיעות).'
+  : 'מלאי את השדות <b>בשפה של הלקוחה שלך</b>. מה שריק פשוט לא יופיע. כל מילה בדף ניתנת לשינוי, גם המילים הקבועות (מסומנות ✍️, ליד המקום שבו הן מופיעות).';
 
 loadLocal();
 try{const s=JSON.parse(localStorage.getItem(HK)||"{}");if(s._tpl)activeTpl=s._tpl;}catch(e){}
