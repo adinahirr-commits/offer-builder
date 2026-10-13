@@ -66,6 +66,27 @@
   .done h2{font-size:1.5rem;margin-bottom:8px}
   .done a{display:block;background:var(--sky);border-radius:14px;padding:16px;margin:12px 0;font-weight:800;text-decoration:none;color:var(--ink);word-break:break-all}
   .done a.pink{background:var(--pink)}
+
+  /* ── העוזרת: צ'אט שמעדכן את הדף ── */
+  .chatfab{position:fixed;bottom:84px;left:16px;z-index:120;background:var(--ink);color:#fff;border:none;border-radius:100px;padding:14px 20px;font-family:inherit;font-weight:800;font-size:1rem;cursor:pointer;box-shadow:0 10px 28px -10px rgba(25,26,46,.6)}
+  .chatfab b{color:var(--lime)}
+  .chat{position:fixed;bottom:84px;left:16px;z-index:121;width:min(400px,calc(100vw - 32px));height:min(560px,calc(100vh - 170px));background:#fff;border:1px solid var(--line);border-radius:22px;box-shadow:0 24px 60px -18px rgba(25,26,46,.45);display:none;flex-direction:column;overflow:hidden}
+  .chat.on{display:flex}
+  .chat .ch{background:var(--ink);color:#fff;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;font-weight:800}
+  .chat .ch button{background:none;border:none;color:#fff;font-size:1.3rem;cursor:pointer}
+  .chat .cm{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;background:var(--canvas)}
+  .cmsg{max-width:88%;padding:10px 14px;border-radius:16px;font-size:.97rem;white-space:pre-wrap;line-height:1.5}
+  .cmsg.u{align-self:flex-start;background:var(--pink-soft)}.cmsg.a{align-self:flex-end;background:#fff;border:1px solid var(--line)}
+  .cchg{align-self:flex-end;max-width:88%;font-size:.85rem;color:var(--soft);display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+  .cchg span{background:var(--lime);color:var(--ink);border-radius:100px;padding:2px 10px;font-weight:700}
+  .cchg button{background:none;border:1px solid var(--line);border-radius:100px;padding:2px 10px;cursor:pointer;font-family:inherit;font-size:.85rem}
+  .csug{display:flex;flex-wrap:wrap;gap:6px}.csug button{background:#fff;border:1.5px solid var(--line);border-radius:100px;padding:6px 12px;font-family:inherit;font-size:.88rem;cursor:pointer}
+  .chat form{display:flex;gap:8px;padding:10px;border-top:1px solid var(--line)}
+  .chat textarea{flex:1;font-family:inherit;font-size:1rem;border:1.5px solid var(--line);border-radius:14px;padding:10px 12px;resize:none;height:46px;max-height:120px}
+  .chat form button{background:var(--pink);border:none;border-radius:14px;padding:0 18px;font-weight:800;font-family:inherit;cursor:pointer}
+  .chat form button:disabled{opacity:.5}
+  .flash{animation:flash 2.4s ease-out}@keyframes flash{0%,35%{background:var(--lime)}100%{background:transparent}}
+  @media(max-width:560px){.chat{left:8px;right:8px;width:auto;bottom:76px;height:calc(100vh - 150px)}.chatfab{bottom:76px}}
 </style>
 </head>
 <body>
@@ -81,6 +102,13 @@
 <div class="bar">
   <button class="btn dark" onclick="preview()">👀 צפי בדף</button>
   <button class="btn pink" onclick="publish()">🚀 פרסמי את הדף</button>
+</div>
+
+<button class="chatfab" id="chatfab" onclick="Chat.toggle()">💬 <b>עוזרת AI</b> · בקשי ממנה שתעדכן את הדף</button>
+<div class="chat" id="chat" role="dialog" aria-label="העוזרת של הבנאי">
+  <div class="ch"><span>💬 העוזרת של הדף</span><button type="button" onclick="Chat.toggle()" aria-label="סגירה">✕</button></div>
+  <div class="cm" id="chatlog"></div>
+  <form id="chatform"><textarea id="chatin" placeholder="למשל: תוסיפי ל״מה כלול״ מפגש 1:1" rows="1"></textarea><button id="chatsend">שליחה</button></form>
 </div>
 
 <div class="ov" id="ov">
@@ -213,6 +241,17 @@ const FIELDS = [
    {k:"txtHow",       t:"input", fx:true, label:"השורה הקטנה מעל ״איך זה עובד״ (כשאין שלבים)", hint:"", v:PageEngine.TEXTS.txtHow},
  ]},
 
+ {sec:"🎁 מה כלול בהצעה", cap:"כל מרכיב מקבל כרטיס באותו גודל בדיוק, כדי שהיא תראה את כל הערך. לכל אחד: שם קצר, ושורה אחת שמסבירה מה היא מקבלת. אפשר להוסיף כמה שרוצים, גם 12.", f:[
+   {k:"incTitle", t:"input", label:"כותרת", hint:"לא חובה. ברירת מחדל: מה כלול בהצעה", v:""},
+   {t:"repeater", k:"incItems", label:"המרכיבים", hint:"כל מה שהיא מקבלת: מפגשים, לייבים, חומרים, בונוסים, תמיכה, גישה",
+     add:"+ עוד מרכיב", empty:"עדיין אין מרכיבים. הוסיפי את הראשון, או בקשי מהצ'אט (💬) שיציע",
+     rows:[
+       {k:"e", t:"input", label:"אייקון (אימוג'י, לא חובה)", ph:"🎥"},
+       {k:"t", t:"input", label:"שם המרכיב", ph:"4 לייבים קבוצתיים"},
+       {k:"d", t:"area",  label:"מה היא מקבלת (אפשר כמה שורות)", ph:"פעם בשבוע, עם הקלטה למי שלא יכלה להגיע."},
+     ]},
+ ]},
+
  {sec:"💎 ההצעה · מחיר, תאריך ומקומות", cap:"מחיר מלא ומחיר מייסדות ל-3 עד 5 הראשונות. בלי תאריך זה ״מתישהו״, ומתישהו זה אף פעם.", f:[
    {k:"priceLabel", t:"input", label:"תווית המחיר", hint:"", v:"ההשקעה"},
    {k:"price",      t:"input", label:"המחיר המלא", hint:"המחיר האמיתי של התוכנית. למשל: ₪2,400", v:"₪390"},
@@ -224,7 +263,6 @@ const FIELDS = [
    {k:"txtStart",     t:"input", fx:true, label:"המילים לפני התאריך", hint:"מופיע כך: 📅 מתחילים ב-25.10", v:PageEngine.TEXTS.txtStart},
    {k:"places",    t:"input", label:"כמה מקומות", hint:"מספר קטן ויפה, 4 עד 8", v:""},
    {k:"txtPlaces",    t:"input", fx:true, label:"המילה אחרי מספר המקומות", hint:"מופיע כך: 🪑 5 מקומות", v:PageEngine.TEXTS.txtPlaces},
-   {k:"includes",   t:"area",  label:"מה כלול", hint:"שורה לכל פריט", v:"5 ארוחות מלאות\nמשלוח חינם\nהחלפת מנה בלי תוספת"},
    {k:"offerNote",  t:"input", label:"משפט ביטחון", hint:"", v:"לא מתאים? מחזירים לך את הכסף."},
    {k:"faqTitle", t:"input", label:"כותרת השאלות הנפוצות", hint:"לא חובה. למשל: שאלות שחוזרות", v:""},
    {t:"repeater", k:"faqs", label:"שאלות נפוצות", hint:"כמה שתרצי. השאלות שהלקוחות שואלות לפני שהן מחליטות. אם אין, השאירי ריק",
@@ -334,6 +372,8 @@ function renderReps(){ Object.keys(REPS).forEach(renderRep); }
 function migrateQuotes(obj){
   const el=document.querySelector('[data-k="testimonials"]');
   if(el && !el.value && obj && (obj.t1q||"").trim()) el.value=JSON.stringify([{q:obj.t1q.trim(), n:(obj.t1n||"").trim()}]);
+  const ic=document.querySelector('[data-k="incItems"]');
+  if(ic && !ic.value && obj && (obj.includes||"").trim()) ic.value=JSON.stringify(obj.includes.split("\n").map(x=>x.trim()).filter(Boolean).map(t=>({e:"",t,d:""})));
   const fq=document.querySelector('[data-k="faqs"]');
   if(fq && !fq.value && obj && (obj.faqQ||"").trim()) fq.value=JSON.stringify([{q:obj.faqQ.trim(), a:(obj.faqA||"").trim()}]);
 }
@@ -525,6 +565,84 @@ document.addEventListener("click",e=>{
   if(e.target.dataset.repdel){ const k=e.target.dataset.repdel; syncRep(k); const rows=repRows(k); rows.splice(+e.target.dataset.i,1); setRep(k, rows); return; }
   if(e.target.dataset.tpl){ activeTpl=e.target.dataset.tpl; renderTpl(true); }
 });
+
+/* ── העוזרת: שולחת לשרת את מצב הטופס + הבקשה, מקבלת שינויים ומחילה אותם מיד ── */
+const Chat = (function(){
+  const BLOCK = new Set(["email","ownership","legalContact","heroImg","aboutImg"]);
+  const log = document.getElementById("chatlog"), box = document.getElementById("chat"), inp = document.getElementById("chatin"), send = document.getElementById("chatsend");
+  const history = []; let busy = false, undoStack = [];
+  const SUGG = ["הציעי לי מה לכלול בהצעה","מה חסר לי בדף?","קצרי לי את הכותרת","הפכי את כל הדף ללשון רבים"];
+
+  function schema(){
+    const out = [];
+    FIELDS.forEach(g=>g.f.forEach(f=>{
+      if(!f.k || BLOCK.has(f.k) || f.t==="headlineGen" || f.t==="imgPicker") return;
+      const el = document.querySelector('[data-k="'+f.k+'"]'); if(!el) return;
+      if(f.t==="repeater"){
+        if(f.k==="images" || f.k==="videos") return;     // תמונות וסרטונים מתווספים ידנית
+        out.push({k:f.k, label:f.label, kind:"list", value:el.value, rows:f.rows.filter(r=>r.t!=="img").map(r=>({k:r.k,label:r.label}))});
+      } else out.push({k:f.k, label:f.label, kind:f.t==="choice"?"choice":f.t==="area"?"area":"input", fx:!!f.fx, value:el.value, options:f.t==="choice"?f.options.map(o=>({v:o.v})):undefined});
+    }));
+    out.push({k:"palette", label:"ערכת הצבעים", kind:"choice", value:document.querySelector('[data-k="palette"]').value||PageEngine.DEFAULT_PALETTE, options:Object.keys(PageEngine.PALETTES).map(k=>({v:k}))});
+    return out;
+  }
+  function labelOf(k){ if(k==="palette") return "ערכת צבעים"; let l=k; FIELDS.forEach(g=>g.f.forEach(f=>{ if(f.k===k) l=f.label; })); return l; }
+  function add(cls, text){ const d=document.createElement("div"); d.className=cls; d.textContent=text; log.appendChild(d); log.scrollTop=log.scrollHeight; return d; }
+  function apply(changes){
+    const prev = [];
+    changes.forEach(c=>{
+      const el = document.querySelector('[data-k="'+c.k+'"]'); if(!el) return;
+      prev.push({k:c.k, value:el.value}); el.value = c.value;
+      if(REPS[c.k]) renderRep(c.k);
+      const w = el.closest(".fld"); if(w){ const det=w.closest("details"); if(det) det.open=true; w.classList.remove("flash"); void w.offsetWidth; w.classList.add("flash"); }
+    });
+    if(changes.some(c=>c.k==="palette")) refreshPal();
+    if(changes.some(c=>c.k==="gender")) applyGender(document.querySelector('[data-k="gender"]').value);
+    saveLocal(); checkCtaUrl();
+    if(document.getElementById("ov").classList.contains("on")) document.getElementById("pv").srcdoc = PageEngine.buildPageHTML(readAll(), {});
+    return prev;
+  }
+  function undo(prev){
+    prev.forEach(p=>{ const el=document.querySelector('[data-k="'+p.k+'"]'); if(el){ el.value=p.value; if(REPS[p.k]) renderRep(p.k); } });
+    refreshPal(); saveLocal();
+    if(document.getElementById("ov").classList.contains("on")) document.getElementById("pv").srcdoc = PageEngine.buildPageHTML(readAll(), {});
+  }
+  async function ask(text){
+    if(busy || !text.trim()) return;
+    busy = true; send.disabled = true;
+    log.querySelectorAll(".csug").forEach(e=>e.remove());
+    add("cmsg u", text); const wait = add("cmsg a", "רגע, חושבת…");
+    try{
+      const r = await fetch("/api/assist",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({token:TOKEN, message:text, history:history.slice(-10), fields:schema()})});
+      let j={}; try{ j=await r.json(); }catch(e){ j={error:"השרת לא ענה כמו שצריך. נסי שוב בעוד רגע"}; }
+      if(!j.ok) throw new Error(j.error||"שגיאה");
+      wait.textContent = j.reply;
+      history.push({role:"user",text}, {role:"assistant",text:j.reply});
+      if(j.changes && j.changes.length){
+        const prev = apply(j.changes);
+        const row = document.createElement("div"); row.className="cchg";
+        row.innerHTML = '<span>עודכן:</span>'+j.changes.map(c=>'<span>'+labelOf(c.k).replace(/</g,"&lt;")+'</span>').join("");
+        const u = document.createElement("button"); u.type="button"; u.textContent="↩ ביטול";
+        u.onclick = ()=>{ undo(prev); row.remove(); add("cmsg a","ביטלתי את השינוי האחרון."); };
+        row.appendChild(u); log.appendChild(row); log.scrollTop = log.scrollHeight;
+      }
+    }catch(e){ wait.textContent = e.message; }
+    finally{ busy=false; send.disabled=false; inp.focus(); }
+  }
+  document.getElementById("chatform").addEventListener("submit",e=>{ e.preventDefault(); const t=inp.value; inp.value=""; inp.style.height=""; ask(t); });
+  inp.addEventListener("keydown",e=>{ if(e.key==="Enter" && !e.shiftKey){ e.preventDefault(); document.getElementById("chatform").requestSubmit(); } });
+  inp.addEventListener("input",()=>{ inp.style.height="46px"; inp.style.height=Math.min(120,inp.scrollHeight)+"px"; });
+  function open(){
+    box.classList.add("on"); document.getElementById("chatfab").style.display="none";
+    if(!log.children.length){
+      add("cmsg a","היי 💛 אני העוזרת של הדף שלך. תגידי לי מה לשנות ואני מעדכנת את הטופס מיד: לכתוב, לקצר, להוסיף מה כלול, להחליף לשון. את תראי הכל ב״צפי בדף״, ומתפרסם רק כשאת לוחצת ״פרסמי״.");
+      const s=document.createElement("div"); s.className="csug"; SUGG.forEach(t=>{ const b=document.createElement("button"); b.type="button"; b.textContent=t; b.onclick=()=>ask(t); s.appendChild(b); }); log.appendChild(s);
+    }
+    inp.focus();
+  }
+  function toggle(){ if(box.classList.contains("on")){ box.classList.remove("on"); document.getElementById("chatfab").style.display=""; } else open(); }
+  return { toggle };
+})();
 
 function preview(){
   document.getElementById("pv").srcdoc = PageEngine.buildPageHTML(readAll(), {});

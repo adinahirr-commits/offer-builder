@@ -125,6 +125,30 @@ app.get("/api/prefill/:token", (req,res)=>{
   res.json(PREFILLS[req.params.token] || null);
 });
 
+// ── העוזרת בבנאי: צ'אט שמעדכן שדות בדף (הדפדפן מחיל את השינויים) ──
+const assistant = require("./lib/assist");
+app.post("/api/assist", async (req,res)=>{
+  const b = req.body || {};
+  const id = (typeof b.token === "string" && b.token.length < 80 && b.token) || ("ip:" + (req.headers["x-forwarded-for"]||req.ip||"").toString().split(",")[0].trim());
+  try{
+    const message = String(b.message||"").trim();
+    if(!message) return res.status(400).json({ error:"כתבי לי מה לשנות 🙂" });
+    if(message.length > assistant.MAX_MSG) return res.status(400).json({ error:"ההודעה ארוכה מדי. אפשר לחלק לכמה הודעות" });
+    if(!Array.isArray(b.fields) || !b.fields.length || b.fields.length > 400) return res.status(400).json({ error:"חסר מידע על הדף" });
+    if(!assistant.isReady()) return res.status(503).json({ error:"העוזרת עדיין לא מחוברת. נסי שוב מאוחר יותר" });
+    if(!assistant.allowed(id)) return res.status(429).json({ error:"הגעת למגבלת ההודעות לשעה. אפשר להמשיך בעוד קצת 💛" });
+    const fields = b.fields.map(f => ({ k:String(f.k||"").slice(0,60), label:String(f.label||""), kind:["input","area","choice","list"].includes(f.kind)?f.kind:"input",
+      fx:!!f.fx, value:String(f.value==null?"":f.value), options:Array.isArray(f.options)?f.options.slice(0,12).map(o=>({v:String(o.v)})):undefined,
+      rows:Array.isArray(f.rows)?f.rows.slice(0,8).map(r=>({k:String(r.k).slice(0,20), label:String(r.label||"")})):undefined })).filter(f=>f.k);
+    const out = await assistant.assist({ message, history:b.history, fields });
+    console.log("assist["+(b.token||"-")+"]", "changes="+out.changes.map(c=>c.k).join(","));
+    res.json({ ok:true, reply:out.reply, changes:out.changes });
+  }catch(e){
+    console.error("assist["+(b.token||"-")+"] failed:", e.message);
+    res.status(500).json({ error:"משהו השתבש אצלי. נסי שוב בעוד רגע" });
+  }
+});
+
 app.get("/health", (_,res)=>res.json({ok:true, live:isLive()}));
 
 (async ()=>{
