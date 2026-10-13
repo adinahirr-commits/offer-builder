@@ -11,8 +11,11 @@ if(process.env.GOOGLE_ADC_JSON && !process.env.GOOGLE_APPLICATION_CREDENTIALS){
 const express = require("express");
 const path = require("path");
 const { buildPageHTML } = require("./lib/page");
+const { buildCoursePageHTML } = require("./lib/coursepage");
+const { buildWebinarPageHTML, buildWebinarThanksHTML } = require("./lib/webinarpage");
 const { createLeadSheet, appendLead, uploadImage, isLive, warmUp } = require("./lib/google");
 const store = require("./lib/store");
+const crypto = require("crypto");
 
 const app = express();
 app.use(express.json({ limit:"24mb" }));  // תמונות (base64) עוברות גם דרך הפרסר הגלובלי — מגבלה נמוכה כאן חסמה כל העלאה מהטלפון
@@ -37,6 +40,17 @@ function slugify(s){
   return (Math.random().toString(36).slice(2,8));
 }
 
+
+// ── שליטה בעריכה: מפתח עריכה סודי לכל דף, שמירת טיוטה בענן, פתיחה לעריכה מכל מכשיר ──
+const newKey = () => crypto.randomBytes(12).toString("hex");
+function keyOk(rec, key){
+  if(!rec || !rec.editKey || typeof key !== "string" || key.length !== rec.editKey.length) return false;
+  return crypto.timingSafeEqual(Buffer.from(key), Buffer.from(rec.editKey));
+}
+const EDIT_PAGE = { offer: "/", course: "/course.html", webinar: "/webinar.html" };
+function editUrl(slug, rec){ return BASE + (EDIT_PAGE[(rec.data||{}).kind || "offer"] || "/") + "?e=" + slug + "." + rec.editKey; }
+function stripCtl(d){ const o = Object.assign({}, d); delete o.__slug; delete o.__key; return o; }
+
 app.use("/lib", express.static(path.join(__dirname,"lib")));
 app.use(express.static(path.join(__dirname,"public")));
 
@@ -44,20 +58,25 @@ app.use(express.static(path.join(__dirname,"public")));
 app.post("/api/publish", async (req,res)=>{
   try{
     const d = req.body || {};
-    if(!d.bizName || !d.headline) return res.status(400).json({error:"חסר שם עסק או כותרת"});
+    if(!d.bizName || !(d.headline || (d.kind === "webinar" && d.w_headline))) return res.status(400).json({error:"חסר שם עסק או כותרת"});
 
-    let slug = Object.keys(PAGES).find(k =>
-      PAGES[k].email === d.email && (PAGES[k].data||{}).bizName === d.bizName);
+    const ctl = { slug: d.__slug, key: d.__key };
+    const data = stripCtl(d);
+    let slug = (PAGES[ctl.slug] && keyOk(PAGES[ctl.slug], ctl.key)) ? ctl.slug : null;   // עריכה של דף קיים (גם אם שונה שם העסק)
+    if(!slug) slug = Object.keys(PAGES).find(k =>
+      PAGES[k].email === d.email && (PAGES[k].data||{}).bizName === d.bizName &&
+      ((PAGES[k].data||{}).kind || "offer") === (d.kind || "offer") && PAGES[k].status !== "draft" && !PAGES[k].editKey);   // דפים ישנים בלי מפתח עריכה: הראשונה שמפרסמת מחדש מקבלת מפתח. לדף עם מפתח נכנסים רק עם הקישור, כך אי אפשר לדרוס דף של מישהי אחרת. דף קורס ודף הצעה של אותו עסק הם שני דפים
     if(!slug){ slug = slugify(d.bizName); while(PAGES[slug]) slug = slugify(""); }
 
     let sheet = (PAGES[slug] && PAGES[slug].sheetId)
       ? { sheetId: PAGES[slug].sheetId, sheetUrl: PAGES[slug].sheetUrl }
       : await createLeadSheet(d.bizName, d.email, d.ownership);
 
-    PAGES[slug] = { data:d, email:d.email, sheetId:sheet.sheetId, sheetUrl:sheet.sheetUrl, updated:Date.now() };
+    const prev = PAGES[slug] || {};
+    PAGES[slug] = { data, email:d.email, sheetId:sheet.sheetId, sheetUrl:sheet.sheetUrl, updated:Date.now(), editKey: prev.editKey || newKey(), status:"live" };
     await store.saveAll(PAGES);
 
-    res.json({ ok:true, pageUrl: BASE + "/p/" + slug, sheetUrl: sheet.sheetUrl, live: isLive() });
+    res.json({ ok:true, pageUrl: BASE + "/p/" + slug, sheetUrl: sheet.sheetUrl, live: isLive(), slug, editKey: PAGES[slug].editKey, editUrl: editUrl(slug, PAGES[slug]) });
   }catch(e){
     console.error(e);
     res.status(500).json({error:"הפרסום נכשל", detail:String(e.message||e)});
@@ -67,18 +86,53 @@ app.post("/api/publish", async (req,res)=>{
 // ── הדף החי ──
 app.get("/p/:slug", (req,res)=>{
   const rec = PAGES[req.params.slug];
-  if(!rec) return res.status(404).send("הדף לא נמצא");
-  res.type("html").send(buildPageHTML(rec.data, { leadUrl: BASE + "/api/lead/" + req.params.slug, slug: req.params.slug }));
+  if(!rec || rec.status === "draft") return res.status(404).send("הדף לא נמצא");
+  const kind = rec.data && rec.data.kind;
+  const build = kind === "course" ? buildCoursePageHTML : kind === "webinar" ? buildWebinarPageHTML : buildPageHTML;
+  res.type("html").send(build(rec.data, { leadUrl: BASE + "/api/lead/" + req.params.slug, thanksUrl: BASE + "/p/" + req.params.slug + "/thanks", slug: req.params.slug }));
+});
+
+// ── דף תודה של וובינר ──
+app.get("/p/:slug/thanks", (req,res)=>{
+  const rec = PAGES[req.params.slug];
+  if(!rec || rec.status === "draft" || (rec.data||{}).kind !== "webinar") return res.status(404).send("הדף לא נמצא");
+  res.type("html").send(buildWebinarThanksHTML(rec.data));
 });
 
 // ── קליטת ליד → כתיבה לטבלה ──
 app.post("/api/lead/:slug", async (req,res)=>{
   try{
     const rec = PAGES[req.params.slug];
-    if(!rec) return res.status(404).json({error:"not found"});
+    if(!rec || rec.status === "draft" || !rec.sheetId) return res.status(404).json({error:"not found"});
     await appendLead(rec.sheetId, req.body||{});
     res.json({ ok:true });
   }catch(e){ console.error("lead err", e); res.status(500).json({ ok:false }); }
+});
+
+
+// ── שמירת טיוטה בענן (בלי לפרסם ובלי ליצור טבלה). מחזיר קישור עריכה ──
+app.post("/api/save", async (req,res)=>{
+  try{
+    const d = req.body || {};
+    const data = stripCtl(d);
+    if(JSON.stringify(data).length > 400*1024) return res.status(413).json({error:"הטיוטה גדולה מדי"});
+    let slug = (PAGES[d.__slug] && keyOk(PAGES[d.__slug], d.__key)) ? d.__slug : null;
+    if(!slug){ slug = slugify(data.bizName); while(PAGES[slug]) slug = slugify(""); }
+    const prev = PAGES[slug] || {};
+    PAGES[slug] = Object.assign({}, prev, { data, email: data.email || prev.email || "", updated: Date.now(),
+      editKey: prev.editKey || newKey(), status: prev.status || "draft" });
+    await store.saveAll(PAGES);
+    res.json({ ok:true, slug, editKey: PAGES[slug].editKey, editUrl: editUrl(slug, PAGES[slug]), status: PAGES[slug].status,
+      pageUrl: PAGES[slug].status === "live" ? BASE + "/p/" + slug : "" });
+  }catch(e){ console.error("save err", e); res.status(500).json({error:"השמירה נכשלה"}); }
+});
+
+// ── פתיחת דף לעריכה (דורש את מפתח העריכה) ──
+app.get("/api/edit/:slug/:key", (req,res)=>{
+  const rec = PAGES[req.params.slug];
+  if(!keyOk(rec, req.params.key)) return res.status(404).json({ error:"קישור העריכה לא נמצא" });
+  res.json({ ok:true, data: rec.data, status: rec.status || "live", slug: req.params.slug, editKey: rec.editKey,
+    pageUrl: (rec.status || "live") === "live" ? BASE + "/p/" + req.params.slug : "", sheetUrl: rec.sheetUrl || "" });
 });
 
 // ── העלאת תמונה (מכווצת בדפדפן → base64) ──

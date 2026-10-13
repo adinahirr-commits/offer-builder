@@ -12,6 +12,9 @@
   body{font-family:'Heebo',sans-serif;background:var(--canvas);color:var(--ink);line-height:1.6}
   .top{background:var(--ink);color:var(--canvas);padding:22px;text-align:center;position:sticky;top:0;z-index:20}
   .top h1{font-size:1.3rem;font-weight:800}.top p{font-size:.9rem;opacity:.8;margin-top:4px}
+  .modes{display:flex;gap:8px;justify-content:center;margin-top:12px;flex-wrap:wrap}
+  .modes a{font-size:.82rem;font-weight:700;padding:7px 14px;border-radius:100px;border:1.5px solid rgba(255,255,255,.35);color:#fff;text-decoration:none}
+  .modes a.on{background:var(--pink);border-color:var(--pink);color:var(--ink)}
   .board{max-width:640px;margin:0 auto;padding:18px 16px 150px}
   .fld.fx{background:#FBFAF7;border:1px dashed var(--line);border-radius:12px;padding:10px 12px}
   .fxtag{font-size:.68rem;font-weight:700;color:var(--soft);background:var(--sky);padding:2px 8px;border-radius:100px;vertical-align:middle}
@@ -100,15 +103,9 @@
 </div>
 
 <div class="bar">
+  <button class="btn dark" onclick="EditSync.save(this)">💾 שמרי טיוטה</button>
   <button class="btn dark" onclick="preview()">👀 צפי בדף</button>
   <button class="btn pink" onclick="publish()">🚀 פרסמי את הדף</button>
-</div>
-
-<button class="chatfab" id="chatfab" onclick="Chat.toggle()">💬 <b>עוזרת AI</b> · בקשי ממנה שתעדכן את הדף</button>
-<div class="chat" id="chat" role="dialog" aria-label="העוזרת של הבנאי">
-  <div class="ch"><span>💬 העוזרת של הדף</span><button type="button" onclick="Chat.toggle()" aria-label="סגירה">✕</button></div>
-  <div class="cm" id="chatlog"></div>
-  <form id="chatform"><textarea id="chatin" placeholder="למשל: תוסיפי ל״מה כלול״ מפגש 1:1" rows="1"></textarea><button id="chatsend">שליחה</button></form>
 </div>
 
 <div class="ov" id="ov">
@@ -117,7 +114,18 @@
   <iframe id="pv"></iframe>
 </div>
 
+<script src="/lib/legal.js"></script>
 <script src="/lib/page.js"></script>
+<script src="/lib/blocks.js"></script>
+
+<button class="chatfab" id="chatfab" onclick="Chat.toggle()">💬 <b>עוזרת AI</b> · בקשי ממנה שתעדכן את הדף</button>
+<div class="chat" id="chat" role="dialog" aria-label="העוזרת של הבנאי">
+  <div class="ch"><span>💬 העוזרת של הדף</span><button type="button" onclick="Chat.toggle()" aria-label="סגירה">✕</button></div>
+  <div class="cm" id="chatlog"></div>
+  <form id="chatform"><textarea id="chatin" placeholder="למשל: תוסיפי ל״מה כלול״ מפגש 1:1" rows="1"></textarea><button id="chatsend">שליחה</button></form>
+</div>
+
+<script src="/lib/builderkit.js"></script>
 <script>
 /* ── מחולל הכותרת: 3 תבניות מנצחות ── */
 const TEMPLATES = {
@@ -148,6 +156,8 @@ const FIELDS = [
  {sec:"פרטי העסק שלך", cap:"כל מילה בדף ניתנת לשינוי, גם המילים הקבועות. הן מסומנות ✍️ ויושבות ליד המקום שבו הן מופיעות בדף.", f:[
    {k:"bizName", t:"input", label:"שם העסק שלך", hint:"מה שיופיע למעלה בדף", v:"המטבח של דנה"},
    {k:"email",   t:"input", label:"המייל שלך (לגוגל)", hint:"לכאן תגיע טבלת הלידים שלך", v:""},
+   {k:"legalName", t:"input", label:"שם רכז/ת הנגישות והפרטיות", hint:"בדרך כלל את. מופיע בהצהרת הנגישות ובמדיניות הפרטיות בדף", v:""},
+   {k:"legalContact", t:"input", label:"טלפון או מייל ליצירת קשר", hint:"חובה לפי החוק. מופיע בדף, למי שרוצה לפנות בנושא נגישות או פרטיות", v:""},
    {k:"gender", t:"choice", label:"הדף פונה ל...", hint:"מחליף את הנוסחים הקבועים בהתאם (דברי/דבר/דברו, מייסדות/מייסדים). מה שכבר שינית בעצמך נשאר",
      options:[
        {v:"f", label:"לנשים (את, השאירי)"},
@@ -276,10 +286,15 @@ const FIELDS = [
  {sec:"סגירה · טופס ומכתב", f:[
    {k:"leadTitle", t:"input", label:"כותרת מעל הטופס", hint:"", v:"רוצה שנתחיל?"},
    {k:"leadSub",   t:"input", label:"משפט מתחת", hint:"", v:"השאירי פרטים ואחזור אלייך היום."},
+   {k:"disclaimer", t:"area", label:"גילוי נאות בתחתית הדף (לא חובה)", hint:"מופיע בקטן בתחתית הדף, לא בגוף הדף. למשל: ״המידע בדף ובליווי הוא לימודי בלבד ואינו ייעוץ השקעות, ייעוץ פנסיוני או ייעוץ מס. [שם] אינה בעלת רישיון ייעוץ השקעות. אין התחייבות לתוצאות.״ אפשר גם לבקש מהעוזרת (💬): ״הוסיפי גילוי נאות שאני לא יועצת השקעות״", v:""},
    {k:"txtFormName",  t:"input", fx:true, label:"בטופס: שדה השם", hint:"", v:PageEngine.TEXTS.txtFormName},
    {k:"txtFormPhone", t:"input", fx:true, label:"בטופס: שדה הטלפון", hint:"", v:PageEngine.TEXTS.txtFormPhone},
    {k:"txtFormNote",  t:"input", fx:true, label:"בטופס: שדה ההערה", hint:"", v:PageEngine.TEXTS.txtFormNote},
    {k:"txtFormBtn",   t:"input", fx:true, label:"בטופס: כפתור השליחה", hint:"ריק = אותו טקסט כמו הכפתור בראש הדף", v:""},
+   {k:"txtConsentPrivacy", t:"input", fx:true, label:"בטופס: תיבת אישור מדיניות הפרטיות (חובה לסמן)", hint:"המילים בתוך { } הופכות לקישור למדיניות. למשל: קראנו ואנחנו מסכימים ל{מדיניות הפרטיות}", v:PageEngine.TEXTS.txtConsentPrivacy},
+   {k:"txtConsentPromo",   t:"input", fx:true, label:"בטופס: תיבת אישור דיוור (לא חובה, לא מסומנת מראש)", hint:"{העסק} = שם העסק שלך. למשל: רוצים לקבל ממני עדכונים (אפשר להסיר בכל עת)", v:PageEngine.TEXTS.txtConsentPromo},
+   {k:"txtLegalA11y",      t:"input", fx:true, label:"בתחתית: הקישור להצהרת הנגישות", hint:"", v:PageEngine.TEXTS.txtLegalA11y},
+   {k:"txtLegalPrivacy",   t:"input", fx:true, label:"בתחתית: הקישור למדיניות הפרטיות", hint:"", v:PageEngine.TEXTS.txtLegalPrivacy},
    {k:"thanks",    t:"input", label:"מה יופיע אחרי שמילאו", hint:"", v:"קיבלתי! אחזור אלייך היום 💛"},
    {k:"finalTitle", t:"input", label:"כותרת מכתב הסגירה", hint:"", v:"מילה אחרונה ממני"},
    {k:"finalText",  t:"area",  label:"כמה שורות מהלב", hint:"למה את עושה את זה", v:"אני יודעת איך זה מרגיש.\nלרצות לתת להם את הטוב ביותר,\nובלי כוח לזה.\nתני לי לקחת את זה ממך."},
@@ -387,7 +402,7 @@ let activeTpl="1";
 
 /* ניקוי הדוגמה — משאירים רק ברירות מחדל גנריות (לא דנה) */
 const KEEP = new Set(["cta","benTitle","identifyTitle","leadTitle","leadSub","thanks","finalTitle","ownership","foundersNote","priceLabel","gender",
-  "txtTopLink","txtFullPrice","txtFounders","txtStart","txtPlaces","txtStages","txtHow","txtFormName","txtFormPhone","txtFormNote","txtFormBtn","txtFooter","hideForm"]);
+  "txtTopLink","txtFullPrice","txtFounders","txtStart","txtPlaces","txtStages","txtHow","txtFormName","txtFormPhone","txtFormNote","txtFormBtn","txtFooter","hideForm","txtConsentPrivacy","txtConsentPromo","txtLegalA11y","txtLegalPrivacy"]);
 document.querySelectorAll("[data-k]").forEach(e=>{ if(!KEEP.has(e.dataset.k)) e.value=""; });
 Object.values(TEMPLATES).forEach(t=>t.vars.forEach(v=>v.v=""));
 
@@ -430,6 +445,8 @@ const noteEl=document.querySelector(".note");
 if(noteEl) noteEl.innerHTML = TOKEN
   ? 'מילאנו לך כבר את הפרטים <b>מהעבודה שלך בקורס</b>. עברי, שני מה שתרצי, וזה שלך. מה שריק פשוט לא יופיע. כל מילה בדף ניתנת לשינוי, גם המילים הקבועות (מסומנות ✍️, ליד המקום שבו הן מופיעות).'
   : 'מלאי את השדות <b>בשפה של הלקוחה שלך</b>. מה שריק פשוט לא יופיע. כל מילה בדף ניתנת לשינוי, גם המילים הקבועות (מסומנות ✍️, ליד המקום שבו הן מופיעות).';
+
+
 
 loadLocal();
 try{const s=JSON.parse(localStorage.getItem(HK)||"{}");if(s._tpl)activeTpl=s._tpl;}catch(e){}
@@ -481,6 +498,7 @@ function refreshImg(k){
   if(del) del.style.display=v?"inline":"none";
 }
 ["aboutImg","heroImg"].forEach(refreshImg);
+EditSync.init({ storageKey: KEY, readAll, applyAll: obj=>{ applyData(obj); refreshPal(); ["aboutImg","heroImg"].forEach(refreshImg); } });
 
 function clientLog(stage,msg,file){
   try{ fetch("/api/log",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({token:TOKEN,stage,msg:String(msg||""),file:file?(file.name+" "+file.type+" "+Math.round(file.size/1024)+"KB"):"",ua:navigator.userAgent})}); }catch(e){}
@@ -654,11 +672,13 @@ async function publish(){
   const d = readAll();
   if(!d.bizName){ alert("רק צריך שם עסק 🙂"); return; }
   if(!d.email || d.email.indexOf("@")<0){ alert("צריך את המייל שלך כדי לפתוח לך את טבלת הלידים 🙂"); return; }
+  if(!(d.legalContact||"").trim()){ alert("צריך טלפון או מייל ליצירת קשר (לפי החוק, מופיע בהצהרת הנגישות ובמדיניות הפרטיות) 🙂"); return; }
   const btn = event.target; btn.textContent="מפרסמת..."; btn.disabled=true;
   try{
-    const r = await fetch("/api/publish",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(d)});
+    const r = await fetch("/api/publish",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(EditSync.withKey(d))});
     const j = await r.json();
     if(!j.ok) throw new Error(j.error||"שגיאה");
+    EditSync.remember(j);
     const ownMsg = d.ownership==="own"
       ? 'שלחתי לך למייל בקשה להפוך לבעלת הטבלה — אשרי אותה והטבלה תהיה שלך לגמרי.'
       : 'הטבלה משותפת אלייך במייל.';
@@ -667,6 +687,7 @@ async function publish(){
       '<p style="color:#6B6B7B">שני הקישורים שלך:</p>'+
       '<a class="pink" href="'+j.pageUrl+'" target="_blank">🌐 דף הנחיתה שלך (לשתף בסטורי)</a>'+
       '<a href="'+j.sheetUrl+'" target="_blank">📊 טבלת הלידים שלך בגוגל</a>'+
+      EditSync.doneHTML(j)+
       (j.live? '<p style="color:#6B6B7B;font-size:.85rem;margin-top:10px">'+ownMsg+'</p>'
              : '<p style="color:#EF55A5;font-size:.85rem;margin-top:10px">מצב בדיקה — עדיין לא מחובר לגוגל.</p>')+
       '</div>';
