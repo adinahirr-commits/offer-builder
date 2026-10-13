@@ -96,6 +96,7 @@
 <div class="top">
   <h1>בנאי דף ההצעה שלך 💛</h1>
   <p>רגש → זיהוי → הגיון. ממלאות, צופות, מפרסמות.</p>
+  <div class="modes" id="modes"></div>
 </div>
 
 <div class="board" id="board">
@@ -446,7 +447,12 @@ if(noteEl) noteEl.innerHTML = TOKEN
   ? 'מילאנו לך כבר את הפרטים <b>מהעבודה שלך בקורס</b>. עברי, שני מה שתרצי, וזה שלך. מה שריק פשוט לא יופיע. כל מילה בדף ניתנת לשינוי, גם המילים הקבועות (מסומנות ✍️, ליד המקום שבו הן מופיעות).'
   : 'מלאי את השדות <b>בשפה של הלקוחה שלך</b>. מה שריק פשוט לא יופיע. כל מילה בדף ניתנת לשינוי, גם המילים הקבועות (מסומנות ✍️, ליד המקום שבו הן מופיעות).';
 
-
+/* מעבר בין סוגי הדפים (שומר את הקישור האישי) */
+(function(){
+  const q = TOKEN ? "?p="+encodeURIComponent(TOKEN) : "";
+  document.getElementById("modes").innerHTML =
+    '<a class="on" href="/'+q+'">דף שירות / הצעה</a><a href="/course.html'+q+'">דף לקורס או לליווי</a><a href="/webinar.html'+q+'">דף הרשמה לוובינר</a>';
+})();
 
 loadLocal();
 try{const s=JSON.parse(localStorage.getItem(HK)||"{}");if(s._tpl)activeTpl=s._tpl;}catch(e){}

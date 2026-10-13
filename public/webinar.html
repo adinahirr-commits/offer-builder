@@ -1,0 +1,447 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>בנאי דף הרשמה לוובינר · אמא משקיעה</title>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{--canvas:#FBFAF7;--ink:#191A2E;--soft:#6B6B7B;--pink:#EF55A5;--pink-soft:#FCE1EF;
+        --lime:#CCD537;--vista:#8C9EFF;--sky:#BEE0F2;--line:#ECE7DF}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Heebo',sans-serif;background:var(--canvas);color:var(--ink);line-height:1.6}
+  .top{background:var(--ink);color:var(--canvas);padding:20px 22px 16px;text-align:center;position:sticky;top:0;z-index:20}
+  .top h1{font-size:1.3rem;font-weight:800}.top p{font-size:.9rem;opacity:.8;margin-top:4px}
+  .modes{display:flex;gap:8px;justify-content:center;margin-top:12px;flex-wrap:wrap}
+  .modes a{font-size:.82rem;font-weight:700;padding:7px 14px;border-radius:100px;border:1.5px solid rgba(255,255,255,.35);color:#fff;text-decoration:none}
+  .modes a.on{background:var(--pink);border-color:var(--pink);color:var(--ink)}
+  .board{max-width:640px;margin:0 auto;padding:18px 16px 150px}
+  .note{background:var(--pink-soft);border-radius:14px;padding:14px 18px;font-size:.92rem;margin-bottom:16px}
+  .grp{background:#fff;border:1px solid var(--line);border-radius:20px;margin-bottom:14px;overflow:hidden}
+  .grp>summary{list-style:none;cursor:pointer;padding:18px 22px;font-weight:800;font-size:1.08rem;display:flex;align-items:center}
+  .grp>summary::-webkit-details-marker{display:none}
+  .grp>summary::after{content:"▾";color:var(--pink);margin-inline-start:auto}
+  .grp[open]>summary::after{content:"▴"}
+  .grp .body{padding:0 22px 20px}
+  .movecap{font-size:.82rem;color:var(--soft);margin:-4px 0 14px;line-height:1.55}
+  .fld{margin-bottom:14px}.fld label{display:block;font-weight:700;font-size:.96rem;margin-bottom:4px}
+  .fld .hint{font-size:.8rem;color:var(--soft);margin-bottom:7px}
+  .fld input,.fld textarea,.fld select{width:100%;font-family:inherit;font-size:1rem;padding:12px 14px;border:1.5px solid var(--line);border-radius:12px;background:#fff;color:var(--ink)}
+  .fld input:focus,.fld textarea:focus,.fld select:focus{outline:none;border-color:var(--pink)}
+  .fld textarea{min-height:96px;resize:vertical;line-height:1.6}
+  .fld textarea.tall{min-height:200px}
+  .ai{background:var(--sky);border-radius:14px;padding:14px;margin-bottom:14px}
+  .ai .t{font-weight:800;font-size:.92rem;margin-bottom:6px}.ai .d{font-size:.82rem;color:var(--ink);opacity:.8;margin-bottom:10px;line-height:1.5}
+  .cbtn{font-family:inherit;font-weight:800;font-size:.92rem;padding:11px 18px;border-radius:100px;border:none;cursor:pointer;background:var(--ink);color:#fff}
+  .cbtn.ok{background:var(--lime);color:var(--ink)}
+  .cbtn.alt{background:#fff;color:var(--ink);border:1.5px solid var(--ink)}
+  .row{display:flex;gap:8px;flex-wrap:wrap}
+  .steps{display:grid;gap:8px;margin:2px 0 14px}
+  .step{display:flex;gap:10px;font-size:.85rem;color:var(--ink);line-height:1.5}
+  .step b{flex-shrink:0;width:24px;height:24px;border-radius:50%;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.78rem}
+  .palgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
+  .palbtn{display:flex;align-items:center;gap:8px;font-family:inherit;font-weight:700;font-size:.85rem;padding:10px 12px;border-radius:12px;border:2px solid var(--line);background:#fff;cursor:pointer;color:var(--ink)}
+  .palbtn.on{border-color:var(--ink);background:var(--canvas)}
+  .palbtn .dots{display:flex;gap:3px}
+  .palbtn .dots i{width:16px;height:16px;border-radius:50%;display:block;border:1px solid rgba(0,0,0,.08)}
+  .imgrow{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .imgbtn{display:inline-block;font-weight:700;font-size:.9rem;padding:10px 18px;border-radius:100px;border:1.5px dashed var(--soft);cursor:pointer;background:#fff}
+  .imgprev{width:64px;height:64px;object-fit:cover;border-radius:12px;border:1px solid var(--line)}
+  .imgdel{font-family:inherit;font-size:.8rem;font-weight:700;border:none;background:none;color:var(--soft);cursor:pointer;text-decoration:underline}
+  .bar{position:fixed;bottom:0;left:0;right:0;background:rgba(251,250,247,.95);backdrop-filter:blur(8px);border-top:1px solid var(--line);padding:12px 16px;display:flex;gap:10px;justify-content:center;z-index:30}
+  .btn{font-family:inherit;font-weight:800;font-size:1rem;padding:14px 22px;border-radius:100px;border:none;cursor:pointer;text-decoration:none;text-align:center}
+  .btn.pink{background:var(--pink);color:var(--ink)}.btn.dark{background:var(--ink);color:#fff}
+  .ov{position:fixed;inset:0;background:rgba(25,26,46,.6);z-index:100;display:none;padding:14px}
+  .ov.on{display:flex;flex-direction:column}
+  .ov .head{display:flex;justify-content:space-between;align-items:center;color:#fff;padding:6px 4px 12px}
+  .ov iframe{flex:1;width:100%;border:none;border-radius:16px;background:#fff}
+  .ov .x{background:#fff;border:none;border-radius:100px;padding:10px 20px;font-weight:800;cursor:pointer;font-family:inherit}
+  .done{background:#fff;border-radius:20px;padding:28px;text-align:center;max-width:520px;margin:20px auto}
+  .done h2{font-size:1.5rem;margin-bottom:8px}
+  .done a{display:block;background:var(--sky);border-radius:14px;padding:16px;margin:12px 0;font-weight:800;text-decoration:none;color:var(--ink);word-break:break-all}
+  .done a.pink{background:var(--pink)}
+  .toast{position:fixed;bottom:84px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 20px;border-radius:100px;font-weight:700;font-size:.9rem;z-index:200;display:none;max-width:90vw;text-align:center}
+</style>
+</head>
+<body>
+<div class="top">
+  <h1>בנאי דף הרשמה לוובינר 💛</h1>
+  <p>דף הרשמה, דף תודה עם קבוצת וואטסאפ, וטבלת נרשמות. הכל במקום אחד.</p>
+  <div class="modes" id="modes"></div>
+</div>
+
+<div class="board" id="board">
+  <div class="note">הכלי לא כותב בשבילך. הוא מכין לך <b>פרומפט מוכן לכל מקטע</b>, עם הפרטים שלך בפנים. את מעתיקה אותו ל-ChatGPT / Claude / ג'מיני שלך, ומדביקה את התשובה כאן. מה שריק פשוט לא יופיע בדף.</div>
+</div>
+
+<div class="bar">
+  <button class="btn dark" onclick="EditSync.save(this)">💾 שמרי טיוטה</button>
+  <button class="btn dark" onclick="preview()">👀 צפי בדף</button>
+  <button class="btn dark" onclick="previewThanks()">🎉 דף התודה</button>
+  <button class="btn pink" onclick="publish()">🚀 פרסמי את הדף</button>
+</div>
+
+<div class="ov" id="ov">
+  <div class="head"><span style="font-weight:800">כך נראה הדף שלך</span>
+    <button class="x" onclick="closeOv()">סגירה ✕</button></div>
+  <iframe id="pv"></iframe>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="/lib/legal.js"></script>
+<script src="/lib/prefillmap.js"></script>
+<script src="/lib/page.js"></script>
+<script src="/lib/blocks.js"></script>
+<script src="/lib/builderkit.js"></script>
+<script src="/lib/coursepage.js"></script>
+<script src="/lib/webinarpage.js"></script>
+<script src="/lib/webinarprompts.js"></script>
+<script>
+const params = new URLSearchParams(location.search);
+const TOKEN = params.get("p");
+const KEY = TOKEN ? ("webinarBuilder_"+TOKEN) : "webinarBuilderV1";
+
+/* מעבר בין סוגי הדפים (שומר את הקישור האישי) */
+(function(){
+  const q = TOKEN ? "?p="+encodeURIComponent(TOKEN) : "";
+  document.getElementById("modes").innerHTML =
+    '<a href="/'+q+'">דף שירות / הצעה</a><a href="/course.html'+q+'">דף לקורס או לליווי</a><a class="on" href="/webinar.html'+q+'">דף הרשמה לוובינר</a>';
+})();
+
+const SECTION_FIELDS = [
+ ["learn","3️⃣ מה הולך לקרות בהדרכה","w_learn","3-4 בולטים של סקרנות: מה היא תגלה, בלי ה״איך״. שורה לכל בולט."],
+ ["problem","4️⃣ חיבור לבעיה","w_problem","סצנות מהחיים, שיגרמו לה להרגיש ״הוא מכיר אותי״."],
+ ["forwhom","5️⃣ למי זה מתאים","w_forwhom","שורת פתיח ו-4 בולטים שבהם היא מזהה את עצמה."],
+ ["about","7️⃣ נעים להכיר","w_about","קצר: מי את, גם אני הייתי שם, ותוצאות. בלי למכור."],
+];
+
+const FIELDS = [
+ {sec:"פרטי ההדרכה", open:true, f:[
+   {k:"bizName", t:"input", label:"שם ההדרכה או העסק", hint:"מה שיופיע למעלה בדף ובכותרת הדפדפן"},
+   {k:"name", t:"input", label:"השם שלך", hint:"איך את חותמת"},
+   {k:"email", t:"input", label:"המייל שלך (לגוגל)", hint:"לכאן תגיע טבלת הנרשמות שלך"},
+   {k:"legalName", t:"input", label:"שם רכז/ת הנגישות והפרטיות", hint:"בדרך כלל את. מופיע בהצהרת הנגישות ובמדיניות הפרטיות בדף", v:""},
+   {k:"legalContact", t:"input", label:"טלפון או מייל ליצירת קשר", hint:"חובה לפי החוק. מופיע בדף, למי שרוצה לפנות בנושא נגישות או פרטיות", v:""},
+   {k:"ownership", t:"choice", label:"איפה יישמרו הנרשמות?", hint:"בכל מקרה רק את רואה אותן",
+     options:[{v:"shared",label:"אצל אמא משקיעה, משותף אליי (הכי פשוט)"},{v:"own",label:"בגוגל שלי, בבעלות מלאה (אאשר במייל)"}], v:"shared"},
+ ]},
+
+ {sec:"1 · על מה ההדרכה", open:true, cap:"הפרטים האלה נכנסים לכל פרומפט, והם הדבר היחיד ש-ה-AI מורשה להשתמש בו. ככה הוא לא ממציא. קצר ואמיתי עדיף על ארוך ויפה.", f:[
+   {k:"gender", t:"choice", label:"הקהל שלך", options:[{v:"women",label:"נשים"},{v:"men",label:"גברים"},{v:"mixed",label:"מעורב"}], v:"women"},
+   {k:"audience", t:"area", label:"מי הקהל", hint:"מי הן, מה התחום שלהן, מה האתגרים"},
+   {k:"problem", t:"area", label:"הבעיה המרכזית שלהן", hint:"במילים שהן אומרות"},
+   {k:"hell", t:"area", label:"רגע של תסכול שיא מהחיים שלה", hint:"סצנה אחת, ב-2 בלילה. לא ״קשה לה״, אלא מה קורה בפועל"},
+   {k:"tried", t:"area", label:"מה הן כבר ניסו ולמה זה לא עבד", hint:"קורסים, לבד, עבודה קשה"},
+   {k:"belief", t:"area", label:"האמונה שמעכבת אותן", hint:"מה היא חושבת על עצמה? למשל: ״אני לא משפיענית״"},
+   {k:"heaven", t:"area", label:"התוצאה: איך נראים החיים אחרי", hint:"מה הדבר הראשון שהיא תעשה כשתצליח"},
+   {k:"learnRaw", t:"area", label:"מה הן יגלו בהדרכה", hint:"3-4 דברים. מה, לא איך. למשל: למה סרטונים יפים לא מביאים לקוחות"},
+   {k:"edge", t:"area", label:"הרוטב הסודי שלך", hint:"מה רק אצלך ולא אצל אחרים"},
+   {k:"credentials", t:"area", label:"הניסיון, המספרים והתוצאות שלך", hint:"רק עובדות"},
+   {k:"bio", t:"area", label:"הסיפור שלך", hint:"3-4 משפטים אמיתיים"},
+ ]},
+
+ {sec:"📅 מועד, מקומות ומה קורה אחרי ההרשמה", open:true, cap:"בלי תאריך ושעה קרובים, היא תגיד ״אני ארשם אחר כך״ ולא תחזור. תאריך קרוב: 3 עד 10 ימים.", f:[
+   {k:"webDate", t:"date", label:"תאריך", hint:""},
+   {k:"webTime", t:"time", label:"שעה", hint:""},
+   {k:"webDuration", t:"input", label:"כמה זמן (בדקות)", hint:"לשמירה ביומן", v:"60"},
+   {k:"places", t:"input", label:"כמה מקומות", hint:"רק אם באמת מוגבל. ריק = לא מופיע"},
+   {k:"waUrl", t:"input", label:"קישור לקבוצת הוואטסאפ השקטה", hint:"https://chat.whatsapp.com/... הקבוצה שאליה היא מצטרפת אחרי ההרשמה"},
+   {k:"liveUrl", t:"input", label:"קישור לשידור (זום)", hint:"לא חובה. אם יש, יופיע בדף התודה. אם את רוצה לשלוח אותו רק בקבוצה, השאירי ריק"},
+   {k:"cta", t:"input", label:"מה כתוב על הכפתור", hint:"", v:"אני בפנים! שלחו לי את הקישור"},
+   {k:"leadTitle", t:"input", label:"כותרת מעל הטופס", hint:"", v:"שומרת לך מקום?"},
+   {k:"afterNote", t:"input", label:"מה כתוב מתחת לטופס", hint:"", v:"אחרי ההרשמה יחכה לך קישור לקבוצת וואטסאפ שקטה, שם אשלח את הקישור להדרכה ותזכורת."},
+   {k:"thanksTitle", t:"input", label:"כותרת דף התודה", hint:"", v:"נרשמת! המקום שלך שמור"},
+   {k:"thanksNote", t:"input", label:"שורה על ההכנה", hint:"בדף התודה, ״מכינה מחברת״", v:"ומגיעה בזמן. זה הולך להיות שווה."},
+ ]},
+
+ {sec:"🎨 העיצוב שלך", cap:"בחרי צבעים ותמונות. הדף הזה שלך.", f:[
+   {t:"palettePicker"},
+   {t:"imgPicker", k:"aboutImg", label:"תמונה שלך", hint:"ליד ״נעים להכיר״. הכי טוב תמונה שלך מחייכת"},
+   {t:"imgPicker", k:"heroImg", label:"תמונה בראש הדף", hint:"לא חובה"},
+   {k:"heroVideo", t:"input", label:"או סרטון בראש הדף", hint:"קישור YouTube או Vimeo. אם יש, הוא מחליף את התמונה"},
+ ]},
+
+ {sec:"6 · הוכחות חברתיות", cap:"צילום מסך של הודעה אמיתית שמישהי שלחה לך על התוכן שלך שווה יותר מכל ציטוט. אם אין עדיין, השאירי ריק והמקטע לא יופיע.", f:[
+   {k:"proofTitle", t:"input", label:"כותרת", hint:"", v:"מה כותבות לי"},
+   {t:"imgPicker", k:"proofImg1", label:"צילום מסך 1", hint:"לא חובה"},
+   {t:"imgPicker", k:"proofImg2", label:"צילום מסך 2", hint:"לא חובה"},
+   {t:"imgPicker", k:"proofImg3", label:"צילום מסך 3", hint:"לא חובה"},
+   {k:"t1q", t:"input", label:"ציטוט 1", hint:""}, {k:"t1n", t:"input", label:"שם הממליצה 1", hint:""},
+   {k:"t2q", t:"input", label:"ציטוט 2", hint:""}, {k:"t2n", t:"input", label:"שם הממליצה 2", hint:""},
+ ]},
+];
+
+const board = document.getElementById("board");
+const esc = s => String(s==null?"":s).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;");
+
+function fieldHTML(f){
+  if(f.t==="palettePicker"){
+    return '<div class="fld"><label>ערכת הצבעים</label><input type="hidden" data-k="palette" value="">'+
+      '<div class="palgrid">'+Object.keys(PageEngine.PALETTES).map(k=>{
+        const p=PageEngine.PALETTES[k];
+        return '<button type="button" class="palbtn" data-pal="'+k+'"><span class="dots"><i style="background:'+p.accent+'"></i><i style="background:'+p.ident+'"></i><i style="background:'+p.ink+'"></i></span><span>'+p.name+'</span></button>';
+      }).join("")+'</div></div>';
+  }
+  if(f.t==="imgPicker"){
+    return '<div class="fld"><label>'+f.label+'</label>'+(f.hint?'<div class="hint">'+f.hint+'</div>':'')+
+      '<input type="hidden" data-k="'+f.k+'" value="">'+
+      '<div class="imgrow" data-imgrow="'+f.k+'">'+
+      '<label class="imgbtn">📷 בחרי תמונה<input type="file" accept="image/*,.heic,.heif" data-imgfile="'+f.k+'" style="display:none"></label>'+
+      '<img class="imgprev" data-imgprev="'+f.k+'" style="display:none" alt="">'+
+      '<button type="button" class="imgdel" data-imgdel="'+f.k+'" style="display:none">הסרה ✕</button></div></div>';
+  }
+  if(f.t==="hidden") return '<input type="hidden" data-k="'+f.k+'" value="">';
+  let el;
+  if(f.t==="choice") el='<select data-k="'+f.k+'">'+f.options.map(o=>'<option value="'+o.v+'"'+(o.v===f.v?' selected':'')+'>'+o.label+'</option>').join("")+'</select>';
+  else if(f.t==="area") el='<textarea data-k="'+f.k+'">'+esc(f.v||"")+'</textarea>';
+  else if(f.t==="date"||f.t==="time") el='<input type="'+f.t+'" data-k="'+f.k+'" value="'+esc(f.v||"")+'">';
+  else el='<input data-k="'+f.k+'" value="'+esc(f.v||"")+'">';
+  return '<div class="fld"><label>'+f.label+'</label>'+(f.hint?'<div class="hint">'+f.hint+'</div>':'')+el+'</div>';
+}
+function addGroup(title, capHTML, bodyHTML, open){
+  const d=document.createElement("details"); d.className="grp"; if(open) d.open=true;
+  d.innerHTML='<summary>'+title+'</summary><div class="body">'+(capHTML?'<div class="movecap">'+capHTML+'</div>':'')+bodyHTML+'</div>';
+  board.appendChild(d); return d;
+}
+
+const G = FIELDS.map(g => ({g, html: g.f.map(fieldHTML).join("")}));
+addGroup(G[0].g.sec, G[0].g.cap, G[0].html, true);
+addGroup(G[1].g.sec, G[1].g.cap, G[1].html, true);
+addGroup(G[2].g.sec, G[2].g.cap, G[2].html, true);
+
+addGroup("2 · הדף הראשון, כל המקטעים",
+  "פרומפט אחד שכותב את כל דף ההרשמה בבת אחת. אחר כך משפרים מקטע אחרי מקטע.",
+  '<div class="ai"><div class="t">הפרומפט לדף ההרשמה</div>'+
+  '<div class="steps"><div class="step"><b>1</b><span>מלאי למעלה ״על מה ההדרכה״ ואת המועד</span></div>'+
+  '<div class="step"><b>2</b><span>לחצי להעתקה והדביקי ב-AI שלך</span></div>'+
+  '<div class="step"><b>3</b><span>הדביקי את כל התשובה בתיבה ולחצי ״פזרי למקטעים״</span></div></div>'+
+  '<div class="row"><button type="button" class="cbtn" data-copy="base">📋 העתיקי את הפרומפט</button></div></div>'+
+  '<div class="fld"><label>הדף המלא שה-AI כתב</label><textarea class="tall" data-k="baseDoc"></textarea></div>'+
+  '<div class="row"><button type="button" class="cbtn ok" onclick="spreadBase()">✨ פזרי למקטעים</button></div>', true);
+
+addGroup("1️⃣2️⃣ הכותרת",
+  "שלוש שורות: משפט הקשר, ההבטחה הגדולה, ו״בלי... בלי... ובלי...״.",
+  '<div class="ai"><div class="t">שיפור הכותרת</div>'+
+  '<div class="d">מעתיקה פרומפט, מדביקה ב-AI שלך, ואת 3 השורות שחזרו מדביקה בתיבה הראשונה. הן מתפצלות לבד.</div>'+
+  '<div class="row"><button type="button" class="cbtn" data-copy="refine:hero">📋 העתיקי פרומפט לשיפור</button></div></div>'+
+  '<div class="fld"><label>הדביקי כאן את 3 השורות (מתפצל לשלושת השדות)</label><textarea id="heroPaste" style="min-height:70px"></textarea></div>'+
+  '<div class="fld"><label>משפט הקשר</label><input data-k="w_pre"></div>'+
+  '<div class="fld"><label>ההבטחה הגדולה</label><textarea data-k="w_headline" style="min-height:70px"></textarea></div>'+
+  '<div class="fld"><label>״בלי... בלי... ובלי...״</label><input data-k="w_without"></div>', true);
+
+SECTION_FIELDS.forEach(([key,title,field,cap])=>{
+  addGroup(title, cap,
+    '<div class="ai"><div class="t">שיפור המקטע עם ה-AI שלך</div>'+
+    '<div class="d">הפרומפט כולל את הפרטים שלך, את הטקסט שכבר יש כאן, ואת מה שנכתב במקטעים הקודמים כדי שלא יחזור על עצמו. את התשובה מדביקים בתיבה, במקום מה שיש בה.</div>'+
+    '<div class="row"><button type="button" class="cbtn" data-copy="refine:'+key+'">📋 העתיקי פרומפט לשיפור</button></div></div>'+
+    '<div class="fld"><label>הטקסט של המקטע</label><textarea class="tall" data-k="'+field+'"></textarea></div>');
+});
+
+addGroup(G[4].g.sec, G[4].g.cap, G[4].html, false);
+addGroup(G[3].g.sec, G[3].g.cap, G[3].html, false);
+
+addGroup("✉️ טקסטים להעתקה: קבוצת הוואטסאפ והמייל",
+  "שני טקסטים שאת צריכה אחרי שהדף באוויר. הדף לא שולח מיילים ולא הודעות בעצמו: את שולחת אותם מהכלי שלך.",
+  '<div class="ai"><div class="t">תיאור לקבוצת הוואטסאפ השקטה</div><div class="d">מעתיקה, מדביקה ב-AI שלך, ומה שחוזר מדביקה בתיאור הקבוצה.</div>'+
+  '<div class="row"><button type="button" class="cbtn" data-copy="group">📋 העתיקי פרומפט</button></div></div>'+
+  '<div class="ai"><div class="t">מייל ברוכה הבאה</div><div class="d">מעתיקה, מדביקה ב-AI שלך, ושולחת לנרשמות מהכלי שבו את שולחת מיילים.</div>'+
+  '<div class="row"><button type="button" class="cbtn" data-copy="email">📋 העתיקי פרומפט</button></div></div>');
+
+addGroup("🧭 סדר המקטעים ומה מוצג בדף",
+  "את מחליטה. מזיזה מקטע למעלה או למטה, ומסירה את מה שלא מתאים לך. מקטע ריק לא מופיע בדף בכל מקרה.",
+  '<input type="hidden" data-k="sectionOrder" value=""><input type="hidden" data-k="sectionHidden" value=""><div id="orderHost"></div>', true);
+for(let n=1;n<=5;n++){
+  addGroup("➕ מקטע חופשי "+n,
+    n===1?"מקטע משלך, בכל נושא: כותרת, טקסט, תמונה וסרטון. כל החלקים לא חובה. הוא נכנס לדף לפני הטופס, ואפשר להזיז אותו בסדר המקטעים.":"",
+    [{k:"x"+n+"Title",t:"input",label:"כותרת"},{k:"x"+n+"Text",t:"area",label:"טקסט",hint:"אפשר **הדגשה**, בולטים עם - בתחילת שורה, וכותרת משנה עם ###"},
+     {t:"imgPicker",k:"x"+n+"Img",label:"תמונה",hint:"לא חובה"},{k:"x"+n+"Video",t:"input",label:"סרטון",hint:"קישור YouTube או Vimeo. לא חובה"}].map(fieldHTML).join(""));
+}
+
+/* ── שמירה וטעינה ── */
+function readAll(){const o={kind:"webinar"};document.querySelectorAll("[data-k]").forEach(e=>o[e.dataset.k]=e.value);return o;}
+function saveLocal(){try{localStorage.setItem(KEY,JSON.stringify(readAll()))}catch(e){}}
+function loadLocal(){try{const s=JSON.parse(localStorage.getItem(KEY)||"{}");
+  document.querySelectorAll("[data-k]").forEach(e=>{if(s[e.dataset.k]!==undefined)e.value=s[e.dataset.k]})}catch(e){}}
+loadLocal();
+/* מילוי אישי: מהעבודה שלה בקורס (קהל, כאב, תוצאה, שלבים, מחיר). ממלא רק שדות ריקים, לא דורס מה שכתבה */
+if(TOKEN){
+  fetch("/api/prefill/"+encodeURIComponent(TOKEN)).then(r=>r.json()).then(pf=>{
+    if(!pf) return;
+    const n = PrefillMap.apply(document, pf, "webinar");
+    if(n){ saveLocal(); toast("מילאנו "+n+" שדות מהעבודה שלך בקורס. עברי עליהם ותקני במילים שלך"); }
+  }).catch(()=>{});
+}
+
+function toast(msg){const t=document.getElementById("toast");t.textContent=msg;t.style.display="block";clearTimeout(toast._t);toast._t=setTimeout(()=>t.style.display="none",4200);}
+
+/* ── העתקת פרומפט ── */
+async function copyText(txt){
+  try{ await navigator.clipboard.writeText(txt); return true; }catch(e){}
+  const ta=document.createElement("textarea"); ta.value=txt; ta.style.cssText="position:fixed;top:0;opacity:0";
+  document.body.appendChild(ta); ta.select(); let ok=false; try{ ok=document.execCommand("copy"); }catch(e){}
+  ta.remove(); return ok;
+}
+function whenFill(a){ const w=WebinarPage.when(a); a.whenText=w?w.text:""; return a; }
+function sectionsText(a){ const o={}; WebinarPrompts.ORDER.forEach(k=>{ if(k!=="hero") o[k]=a[WebinarPrompts.FIELD[k]]||""; }); return o; }
+async function doCopy(btn, what){
+  const a = whenFill(readAll());
+  if(!(a.audience||a.problem||a.hell||a.learnRaw)){
+    toast("קודם ממלאים למעלה ״על מה ההדרכה״, אחרת ה-AI ינחש"); return;
+  }
+  let p;
+  if(what==="base") p = WebinarPrompts.basePrompt(a);
+  else if(what==="group") p = WebinarPrompts.groupPrompt(a);
+  else if(what==="email") p = WebinarPrompts.emailPrompt(a);
+  else p = WebinarPrompts.refinePrompt(what.split(":")[1], a, sectionsText(a));
+  const ok = await copyText(p);
+  if(ok){ const o=btn.textContent; btn.textContent="✓ הועתק"; btn.classList.add("ok"); setTimeout(()=>{btn.textContent=o;btn.classList.remove("ok");},2500);
+    toast("הפרומפט הועתק. עכשיו מדביקים ב-ChatGPT / Claude / ג'מיני"); }
+  else toast("ההעתקה נחסמה בדפדפן. נסי דפדפן אחר");
+}
+
+/* ── פיזור הדף הראשון למקטעים ── */
+function spreadBase(){
+  const txt=document.querySelector('[data-k="baseDoc"]').value;
+  if(!txt.trim()){ toast("קודם מדביקים את הדף שה-AI כתב"); return; }
+  const parts = WebinarPrompts.splitBase(txt);
+  const keys = Object.keys(parts);
+  if(!keys.length){ toast("לא מצאתי כותרות ״מקטע 1, מקטע 2...״ בטקסט. בקשי מה-AI לסמן כל מקטע, או הדביקי ידנית בכל מקטע"); return; }
+  const filled = keys.filter(k=>{ const el=document.querySelector('[data-k="'+k+'"]'); return el && el.value.trim(); });
+  if(filled.length && !confirm("יש כבר טקסט ב-"+filled.length+" מקטעים. להחליף אותם?")) return;
+  keys.forEach(k=>{ const el=document.querySelector('[data-k="'+k+'"]'); if(el) el.value=parts[k]; });
+  saveLocal(); toast("מילאתי "+keys.length+" שדות. עברי על כל מקטע ושפרי");
+}
+
+/* ── כותרת: הדבקה של 3 שורות ── */
+document.getElementById("heroPaste").addEventListener("input",e=>{
+  const ls=e.target.value.split("\n").map(l=>l.replace(/^[\s>*\-•#]+/,"").replace(/\*\*/g,"").replace(/^\d+[.)]\s*/,"").trim()).filter(Boolean);
+  if(ls.length>=3){ set("w_pre",ls[0]); set("w_headline",ls[1]); set("w_without",ls[ls.length-1]); }
+  else if(ls.length===2){ set("w_headline",ls[0]); set("w_without",ls[1]); }
+  else if(ls.length===1) set("w_headline",ls[0]);
+  saveLocal();
+});
+function set(k,v){ const el=document.querySelector('[data-k="'+k+'"]'); if(el) el.value=v; }
+
+/* ── ערכת צבעים ── */
+function refreshPal(){
+  const cur=(document.querySelector('[data-k="palette"]')||{}).value || PageEngine.DEFAULT_PALETTE;
+  document.querySelectorAll(".palbtn").forEach(b=>b.classList.toggle("on", b.dataset.pal===cur));
+}
+refreshPal();
+
+/* ── תמונות ── */
+const IMG_KEYS=["aboutImg","heroImg","proofImg1","proofImg2","proofImg3","x1Img","x2Img","x3Img","x4Img","x5Img"];
+function refreshImg(k){
+  const v=(document.querySelector('[data-k="'+k+'"]')||{}).value||"";
+  const prev=document.querySelector('[data-imgprev="'+k+'"]'), del=document.querySelector('[data-imgdel="'+k+'"]');
+  if(prev){ prev.src=v; prev.style.display=v?"block":"none"; }
+  if(del) del.style.display=v?"inline":"none";
+}
+IMG_KEYS.forEach(refreshImg);
+/* ── שמירה בענן, קישור עריכה וסדר מקטעים ── */
+function applyAllFields(obj){ document.querySelectorAll("[data-k]").forEach(e=>{ if(obj[e.dataset.k]!==undefined) e.value=obj[e.dataset.k]; }); refreshPal(); IMG_KEYS.forEach(refreshImg); if(window._orderDraw) window._orderDraw(); }
+window._orderDraw = OrderUI.render({ host: document.getElementById("orderHost"), defaults: ["learn","problem","forwhom","proof","about","@extras","lead"],
+  labels: {learn:"מה הולך לקרות בהדרכה",problem:"חיבור לבעיה",forwhom:"למי זה מתאים",proof:"הוכחות חברתיות",about:"נעים להכיר",lead:"טופס ההרשמה"}, onChange: saveLocal });
+document.addEventListener("input",e=>{ if(e.target.dataset && /^x\dTitle$/.test(e.target.dataset.k||"") && window._orderDraw) window._orderDraw(); });
+EditSync.init({ storageKey: KEY, readAll, applyAll: applyAllFields });
+
+
+function clientLog(stage,msg,file){
+  try{ fetch("/api/log",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({token:TOKEN,stage,msg:String(msg||""),file:file?(file.name+" "+file.type+" "+Math.round(file.size/1024)+"KB"):"",ua:navigator.userAgent})}); }catch(e){}
+}
+function shrink(file){
+  return new Promise((res,rej)=>{
+    const img=new Image(); const u=URL.createObjectURL(file);
+    img.onload=()=>{ try{
+        const MAX=1400, r=Math.min(1, MAX/Math.max(img.width,img.height));
+        const c=document.createElement("canvas"); c.width=Math.round(img.width*r); c.height=Math.round(img.height*r);
+        c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+        const out=c.toDataURL("image/jpeg",.82); if(out.length<1000) throw new Error("canvas empty"); res(out);
+      }catch(e){ rej(e); } finally{ URL.revokeObjectURL(u); } };
+    img.onerror=()=>{ URL.revokeObjectURL(u); rej(new Error("browser cannot decode")); };
+    img.src=u;
+  });
+}
+function readRaw(file){
+  return new Promise((res,rej)=>{
+    if(file.size>16*1024*1024) return rej(new Error("התמונה גדולה מדי (עד 16MB)"));
+    const fr=new FileReader(); fr.onload=()=>res(fr.result); fr.onerror=()=>rej(new Error("לא הצלחתי לקרוא את הקובץ")); fr.readAsDataURL(file);
+  });
+}
+async function uploadImg(k, file){
+  const row=document.querySelector('[data-imgrow="'+k+'"] .imgbtn');
+  const orig=row.childNodes[0].textContent; row.childNodes[0].textContent="מעלה... ";
+  clientLog("start","",file);
+  try{
+    let dataUrl, raw=false;
+    try{ dataUrl=await shrink(file); }catch(e){ clientLog("shrink-failed",e.message,file); dataUrl=await readRaw(file); raw=true; }
+    const r=await fetch("/api/upload",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({dataUrl,raw,token:TOKEN})});
+    let j={}; try{ j=await r.json(); }catch(e){ j={error:"השרת לא ענה כמו שצריך ("+r.status+"). נסי שוב בעוד רגע"}; }
+    if(!j.ok) throw new Error(j.error||"שגיאה");
+    document.querySelector('[data-k="'+k+'"]').value=j.url; saveLocal(); refreshImg(k); clientLog("done",j.url,file);
+  }catch(e){ clientLog("failed",e.message,file); alert("ההעלאה לא הצליחה: "+e.message); }
+  row.childNodes[0].textContent=orig;
+}
+
+document.addEventListener("input",e=>{ if(e.target.dataset.k) saveLocal(); });
+document.addEventListener("change",e=>{
+  if(e.target.dataset.imgfile && e.target.files[0]){ uploadImg(e.target.dataset.imgfile, e.target.files[0]); e.target.value=""; return; }
+  if(e.target.dataset.k) saveLocal();
+});
+document.addEventListener("click",e=>{
+  const t=e.target;
+  const palBtn=t.closest&&t.closest(".palbtn");
+  if(palBtn){ document.querySelector('[data-k="palette"]').value=palBtn.dataset.pal; saveLocal(); refreshPal(); return; }
+  if(t.dataset&&t.dataset.imgdel){ document.querySelector('[data-k="'+t.dataset.imgdel+'"]').value=""; saveLocal(); refreshImg(t.dataset.imgdel); return; }
+  if(t.dataset&&t.dataset.copy){ doCopy(t, t.dataset.copy); }
+});
+
+/* ── תצוגה ופרסום ── */
+function preview(){
+  document.getElementById("pv").srcdoc = WebinarPage.buildWebinarPageHTML(readAll(), {});
+  document.getElementById("ov").classList.add("on");
+}
+function previewThanks(){
+  document.getElementById("pv").srcdoc = WebinarPage.buildWebinarThanksHTML(readAll());
+  document.getElementById("ov").classList.add("on");
+}
+function closeOv(){document.getElementById("ov").classList.remove("on");}
+
+/* מחפשים שאריות [להשלים] מה-AI, כדי שלא יעלו לאוויר */
+function leftovers(d){
+  const hits=[];
+  Object.keys(d).forEach(k=>{ if(typeof d[k]==="string" && /\[(להשלים|הכנס|הכניסי|שם)[^\]]*\]/.test(d[k])) hits.push(k); });
+  return hits;
+}
+
+async function publish(){
+  const d = readAll();
+  if(!d.bizName){ alert("רק צריך שם עסק או תוכנית 🙂"); return; }
+  if(!d.email || d.email.indexOf("@")<0){ alert("צריך את המייל שלך כדי לפתוח לך את טבלת הנרשמות 🙂"); return; }
+  if(!(d.legalContact||"").trim()){ alert("צריך טלפון או מייל ליצירת קשר (לפי החוק, מופיע בהצהרת הנגישות ובמדיניות הפרטיות) 🙂"); return; }
+  if(!d.w_headline){ alert("חסרה הבטחה גדולה בכותרת. מלאי את מקטע הכותרת 🙂"); return; }
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(d.webDate||"")){ alert("חסר תאריך להדרכה. בלי תאריך, זה ״מתישהו״ 🙂"); return; }
+  if(!/^https:\/\//i.test((d.waUrl||"").trim()) && !confirm("לא הכנסת קישור לקבוצת וואטסאפ, אז דף התודה יופיע בלעדיו. להמשיך?")) return;
+  const left = leftovers(d);
+  if(left.length && !confirm("נשארו בדף סימנים כמו [להשלים...] שה-AI השאיר. כדאי להשלים אותם לפני שמפרסמים.\nלפרסם בכל זאת?")) return;
+  const btn = event.target; btn.textContent="מפרסמת..."; btn.disabled=true;
+  try{
+    const r = await fetch("/api/publish",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(EditSync.withKey(d))});
+    const j = await r.json();
+    if(!j.ok) throw new Error(j.error||"שגיאה");
+    EditSync.remember(j);
+    const ownMsg = d.ownership==="own" ? 'שלחתי לך למייל בקשה להפוך לבעלת הטבלה — אשרי אותה והטבלה תהיה שלך לגמרי.' : 'הטבלה משותפת אלייך במייל.';
+    document.body.innerHTML =
+      '<div class="done"><h2>הדף שלך באוויר! 🎉</h2><p style="color:#6B6B7B">שני הקישורים שלך:</p>'+
+      '<a class="pink" href="'+j.pageUrl+'" target="_blank">🌐 דף ההרשמה שלך (לשתף בסטורי)</a>'+
+      '<a href="'+j.sheetUrl+'" target="_blank">📊 טבלת הנרשמות שלך בגוגל</a>'+
+      EditSync.doneHTML(j)+
+      (j.live? '<p style="color:#6B6B7B;font-size:.85rem;margin-top:10px">'+ownMsg+'</p>'
+             : '<p style="color:#EF55A5;font-size:.85rem;margin-top:10px">מצב בדיקה — עדיין לא מחובר לגוגל.</p>')+'</div>';
+  }catch(e){
+    alert("משהו השתבש: "+e.message); btn.textContent="🚀 פרסמי את הדף"; btn.disabled=false;
+  }
+}
+</script>
+</body>
+</html>
