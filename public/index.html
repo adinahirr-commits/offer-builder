@@ -146,6 +146,14 @@ const FIELDS = [
        {k:"pos", t:"select", label:"איפה בדף", options: PageEngine.IMG_POS},
        {k:"cap", t:"input", label:"כיתוב מתחת לתמונה", hint:"לא חובה"},
      ]},
+   {t:"repeater", k:"videos", label:"סרטונים, איפה שתרצי (עדויות, הסבר, סיור)", hint:"מדביקים קישור, לא מעלים קובץ: יוטיוב (גם סרטון ״לא רשום״), Vimeo, או קובץ בגוגל דרייב ששותף ״לכל מי שיש לו את הקישור״. לכל סרטון בוחרים איפה בדף הוא יופיע",
+     add:"+ עוד סרטון", empty:"עדיין אין סרטונים. אפשר להוסיף כמה שרוצים",
+     rows:[
+       {k:"url", t:"input", label:"הקישור לסרטון", ph:"https://youtu.be/... או https://drive.google.com/file/d/.../view", warn:"הקישור לא נראה כמו יוטיוב, Vimeo או גוגל דרייב, אז הסרטון לא יופיע בדף"},
+       {k:"ratio", t:"select", label:"צורת הסרטון", options: PageEngine.VIDEO_RATIO},
+       {k:"pos", t:"select", label:"איפה בדף", options: PageEngine.IMG_POS},
+       {k:"cap", t:"input", label:"כיתוב מתחת לסרטון", hint:"למשל: מיכל, אמא לשניים, מספרת איך זה היה"},
+     ]},
  ]},
 
  {sec:"1️⃣ הרגש · הכותרת והחלום", cap:"קודם מציתים את ההתרגשות: איך החיים נראים אחרי המוצר שלך. שמחה, רוגע, דופמין.", f:[
@@ -155,6 +163,11 @@ const FIELDS = [
    {k:"sub",      t:"area",  label:"משפט שמוריד חשש", hint:"״גם אם...״ / ״בלי...״", v:"בלי הלחץ של מה מבשלים.\nגם אם אין לך רגע פנוי."},
    {k:"cta",      t:"input", label:"מה כתוב על הכפתור", hint:"", v:"אני רוצה את זה"},
    {k:"ctaUrl",   t:"input", label:"לאן הכפתור מוביל", hint:"ריק = לטופס שבדף (והלידים נכנסים לטבלה שלך). או הדביקי קישור: ווטסאפ (wa.me/972...), דף תשלום, יומן, כל קישור שתרצי", v:"", warn:"הקישור לא נראה תקין. צריך כתובת מלאה, למשל https://wa.me/972501234567"},
+   {k:"hideForm", t:"choice", label:"הטופס בתחתית הדף", hint:"אפשר להסתיר אותו רק כשהכפתור מוביל לקישור (ווטסאפ, תשלום). בלי קישור הטופס תמיד מוצג, אחרת אין לאן ללחוץ",
+     options:[
+       {v:"0", label:"מוצג (לידים נכנסים לטבלה שלך)"},
+       {v:"1", label:"מוסתר (הכל עובר דרך הקישור של הכפתור)"},
+     ], v:"0"},
    {k:"dreamTitle", t:"input", label:"כותרת החלום", hint:"", v:"תארי לעצמך את הערב הזה"},
    {k:"dreamLines", t:"area",  label:"איך החיים נראים אחרי", hint:"סצנות חיוביות, שורה בכל שורה. שתרגיש את השמחה", v:"שש בערב, ואת רגועה.\nריח של ארוחה חמה בבית.\nהילדים מסביב לשולחן.\nואת יושבת איתם, לא במטבח.\nהערב שלך חזר אלייך."},
  ]},
@@ -213,8 +226,13 @@ const FIELDS = [
    {k:"txtPlaces",    t:"input", fx:true, label:"המילה אחרי מספר המקומות", hint:"מופיע כך: 🪑 5 מקומות", v:PageEngine.TEXTS.txtPlaces},
    {k:"includes",   t:"area",  label:"מה כלול", hint:"שורה לכל פריט", v:"5 ארוחות מלאות\nמשלוח חינם\nהחלפת מנה בלי תוספת"},
    {k:"offerNote",  t:"input", label:"משפט ביטחון", hint:"", v:"לא מתאים? מחזירים לך את הכסף."},
-   {k:"faqQ", t:"input", label:"שאלה שחוזרת", hint:"אפשר להשאיר ריק", v:"כמה זמן מראש להזמין?"},
-   {k:"faqA", t:"input", label:"התשובה", hint:"", v:"עד יום חמישי, והכל מגיע ראשון."},
+   {k:"faqTitle", t:"input", label:"כותרת השאלות הנפוצות", hint:"לא חובה. למשל: שאלות שחוזרות", v:""},
+   {t:"repeater", k:"faqs", label:"שאלות נפוצות", hint:"כמה שתרצי. השאלות שהלקוחות שואלות לפני שהן מחליטות. אם אין, השאירי ריק",
+     add:"+ עוד שאלה", empty:"עדיין אין שאלות. אפשר להוסיף כמה שרוצים",
+     rows:[
+       {k:"q", t:"input", label:"השאלה", ph:"כמה זמן מראש להזמין?"},
+       {k:"a", t:"area",  label:"התשובה", ph:"עד יום חמישי, והכל מגיע ראשון."},
+     ]},
  ]},
 
  {sec:"סגירה · טופס ומכתב", f:[
@@ -300,7 +318,8 @@ function renderRep(k){
       if(rf.t==="select") el='<select data-rf="'+rf.k+'">'+rf.options.map(o=>'<option value="'+o.v+'"'+(o.v===v?' selected':'')+'>'+o.label+'</option>').join("")+'</select>';
       else if(rf.t==="area") el='<textarea data-rf="'+rf.k+'" placeholder="'+(rf.ph||"")+'">'+v.replace(/</g,"&lt;")+'</textarea>';
       else el='<input data-rf="'+rf.k+'" placeholder="'+(rf.ph||"")+'" value="'+v.replace(/"/g,'&quot;')+'">';
-      return '<div class="fld"><label>'+rf.label+'</label>'+(rf.hint?'<div class="hint">'+rf.hint+'</div>':'')+el+'</div>';
+      const bad = rf.warn && k==="videos" && rf.k==="url" && v.trim() && !PageEngine.videoEmbed(v);
+      return '<div class="fld"><label>'+rf.label+'</label>'+(rf.hint?'<div class="hint">'+rf.hint+'</div>':'')+el+(rf.warn?'<div class="warn" data-rwarn style="display:'+(bad?'block':'none')+'">'+rf.warn+'</div>':'')+'</div>';
     }).join("")+'</div>').join("") : '<div class="repempty">'+(f.empty||"")+'</div>';
 }
 function syncRep(k){
@@ -315,6 +334,8 @@ function renderReps(){ Object.keys(REPS).forEach(renderRep); }
 function migrateQuotes(obj){
   const el=document.querySelector('[data-k="testimonials"]');
   if(el && !el.value && obj && (obj.t1q||"").trim()) el.value=JSON.stringify([{q:obj.t1q.trim(), n:(obj.t1n||"").trim()}]);
+  const fq=document.querySelector('[data-k="faqs"]');
+  if(fq && !fq.value && obj && (obj.faqQ||"").trim()) fq.value=JSON.stringify([{q:obj.faqQ.trim(), a:(obj.faqA||"").trim()}]);
 }
 
 /* מפתח אישי לכל משתתפת + טעינת המידע שלה */
@@ -326,7 +347,7 @@ let activeTpl="1";
 
 /* ניקוי הדוגמה — משאירים רק ברירות מחדל גנריות (לא דנה) */
 const KEEP = new Set(["cta","benTitle","identifyTitle","leadTitle","leadSub","thanks","finalTitle","ownership","foundersNote","priceLabel","gender",
-  "txtTopLink","txtFullPrice","txtFounders","txtStart","txtPlaces","txtStages","txtHow","txtFormName","txtFormPhone","txtFormNote","txtFormBtn","txtFooter"]);
+  "txtTopLink","txtFullPrice","txtFounders","txtStart","txtPlaces","txtStages","txtHow","txtFormName","txtFormPhone","txtFormNote","txtFormBtn","txtFooter","hideForm"]);
 document.querySelectorAll("[data-k]").forEach(e=>{ if(!KEEP.has(e.dataset.k)) e.value=""; });
 Object.values(TEMPLATES).forEach(t=>t.vars.forEach(v=>v.v=""));
 
@@ -484,7 +505,8 @@ async function uploadRepImg(k, i, file, btn){
 
 document.addEventListener("input",e=>{
   if(e.target.dataset.hk) compute2();
-  else if(e.target.dataset.rf !== undefined){ const rep=e.target.closest(".rep"); if(rep) syncRep(rep.dataset.rep); }
+  else if(e.target.dataset.rf !== undefined){ const rep=e.target.closest(".rep"); if(rep) syncRep(rep.dataset.rep);
+    if(rep && rep.dataset.rep==="videos" && e.target.dataset.rf==="url"){ const w=e.target.parentNode.querySelector("[data-rwarn]"); if(w) w.style.display=(e.target.value.trim() && !PageEngine.videoEmbed(e.target.value))?"block":"none"; } }
   else if(e.target.dataset.k){ saveLocal(); if(e.target.dataset.k==="ctaUrl") checkCtaUrl(); }
 });
 document.addEventListener("change",e=>{
